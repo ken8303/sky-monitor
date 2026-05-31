@@ -212,7 +212,8 @@ a {
 }
 
 .status-strip,
-.telemetry-grid {
+.telemetry-grid,
+.astronomy-grid {
   display: grid;
   gap: 20px;
 }
@@ -223,6 +224,10 @@ a {
 
 .telemetry-grid {
   grid-template-columns: 1.2fr 0.8fr;
+}
+
+.astronomy-grid {
+  grid-template-columns: 1.15fr 0.85fr;
 }
 
 .card {
@@ -357,7 +362,9 @@ a {
 }
 
 .telemetry-panel,
-.map-panel {
+.map-panel,
+.target-panel,
+.moonwatch-panel {
   min-height: 100%;
 }
 
@@ -442,6 +449,65 @@ a {
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   margin-top: 16px;
+}
+
+.target-panel .chart-legend span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.legend-dot.target-a {
+  background: #ff8e72;
+}
+
+.legend-dot.target-b {
+  background: #b4ff8a;
+}
+
+.legend-dot.target-c {
+  background: #7fd2ff;
+}
+
+.moonwatch-phase {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  align-items: center;
+  margin-top: 18px;
+}
+
+.moonwatch-copy strong {
+  display: block;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.35rem;
+}
+
+.moonwatch-copy span,
+.moonwatch-item span,
+.moonwatch-item small {
+  color: var(--muted);
+}
+
+.moonwatch-grid {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.moonwatch-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.moonwatch-item strong {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.12rem;
 }
 
 .panel {
@@ -712,6 +778,7 @@ a {
   .planner-grid,
   .insight-grid,
   .telemetry-grid,
+  .astronomy-grid,
   .status-strip {
     grid-template-columns: 1fr;
   }
@@ -748,7 +815,9 @@ a {
   .mini-forecast li,
   .metric,
   .quick-item,
-  .map-meta {
+  .map-meta,
+  .moonwatch-phase,
+  .moonwatch-item {
     grid-template-columns: 1fr;
   }
 

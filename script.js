@@ -26,6 +26,21 @@ const weatherLabels = {
   95: "Thunderstorm"
 };
 
+const targetCatalog = [
+  { name: "Andromeda Galaxy", ra: 0.712, dec: 41.269, tags: ["galaxy", "north"] },
+  { name: "Pleiades", ra: 3.79, dec: 24.117, tags: ["cluster", "north"] },
+  { name: "Orion Nebula", ra: 5.588, dec: -5.45, tags: ["nebula", "equatorial"] },
+  { name: "Carina Nebula", ra: 10.75, dec: -59.68, tags: ["nebula", "south"] },
+  { name: "Omega Centauri", ra: 13.447, dec: -47.479, tags: ["cluster", "south"] },
+  { name: "Sombrero Galaxy", ra: 12.633, dec: -11.623, tags: ["galaxy", "equatorial"] },
+  { name: "Lagoon Nebula", ra: 18.05, dec: -24.383, tags: ["nebula", "south"] },
+  { name: "Ring Nebula", ra: 18.884, dec: 33.03, tags: ["planetary", "north"] },
+  { name: "North America Nebula", ra: 20.967, dec: 44.53, tags: ["nebula", "north"] },
+  { name: "Triangulum Galaxy", ra: 1.564, dec: 30.66, tags: ["galaxy", "north"] }
+];
+
+const targetColors = ["#ff8e72", "#b4ff8a", "#7fd2ff"];
+
 const astro = (() => {
   const PI = Math.PI;
   const rad = PI / 180;
@@ -128,7 +143,26 @@ const astro = (() => {
     return times;
   }
 
-  return { getTimes };
+  function siderealTime(date, longitude) {
+    const d = toDays(date);
+    const degrees = 280.16 + 360.9856235 * d + longitude;
+    return ((degrees % 360) + 360) % 360;
+  }
+
+  function altitude(date, latitude, longitude, raHours, decDegrees) {
+    const lst = siderealTime(date, longitude) * rad;
+    const ra = raHours * 15 * rad;
+    const dec = decDegrees * rad;
+    const phi = latitude * rad;
+    const hourAngleNow = lst - ra;
+
+    return Math.asin(
+      Math.sin(phi) * Math.sin(dec) +
+      Math.cos(phi) * Math.cos(dec) * Math.cos(hourAngleNow)
+    ) / rad;
+  }
+
+  return { getTimes, altitude };
 })();
 
 const state = {
@@ -171,6 +205,13 @@ const els = {
   trendAxis: document.querySelector("#trend-axis"),
   mapFrame: document.querySelector("#location-map"),
   mapMeta: document.querySelector("#map-meta"),
+  targetLegend: document.querySelector("#target-legend"),
+  targetChart: document.querySelector("#target-chart"),
+  targetAxis: document.querySelector("#target-axis"),
+  moonwatchTitle: document.querySelector("#moonwatch-title"),
+  moonwatchSubtitle: document.querySelector("#moonwatch-subtitle"),
+  moonwatchGrid: document.querySelector("#moonwatch-grid"),
+  moonwatchNote: document.querySelector("#moonwatch-note"),
   modeButtons: document.querySelectorAll("[data-mode]"),
   planButton: document.querySelector("#plan-button"),
   locationButton: document.querySelector("#location-button")
@@ -199,6 +240,10 @@ function formatLocalClock(date, timezone) {
 
 function isValidDate(value) {
   return value instanceof Date && !Number.isNaN(value.valueOf());
+}
+
+function localForecastTimeToDate(timeString, utcOffsetSeconds = 0) {
+  return new Date(Date.parse(`${timeString}Z`) - utcOffsetSeconds * 1000);
 }
 
 function weatherLabel(code) {
@@ -270,6 +315,33 @@ function qualityBadge(score) {
     return "Watch";
   }
   return "Limited";
+}
+
+function describeMoonImpact(illumination, darkHours) {
+  if (illumination <= 20 && darkHours >= 3) {
+    return "Low moon impact tonight";
+  }
+  if (illumination <= 55 && darkHours >= 2) {
+    return "Moderate moon impact tonight";
+  }
+  return "Moonlight will shape target choice";
+}
+
+function buildTargetTracks(location, times, utcOffsetSeconds) {
+  const tracks = targetCatalog
+    .map((target) => {
+      const points = times.map((time) => {
+        const sampleDate = localForecastTimeToDate(time, utcOffsetSeconds);
+        return clamp((astro.altitude(sampleDate, location.latitude, location.longitude, target.ra, target.dec) + 10) / 90, 0, 1);
+      });
+      const peak = Math.max(...points);
+      const visibleHours = points.filter((value) => value > 0.15).length;
+      return { ...target, points, peak, visibleHours };
+    })
+    .filter((target) => target.visibleHours > 0)
+    .sort((a, b) => (b.peak * 100 + b.visibleHours * 5) - (a.peak * 100 + a.visibleHours * 5));
+
+  return tracks.slice(0, 3);
 }
 
 function buildTargets(summary) {
@@ -385,6 +457,20 @@ function deriveSummary(location, forecast) {
     wind: nextEight.map((item) => clamp(item.wind_speed_10m / 30, 0, 1)),
     visibility: nextEight.map((item) => clamp((item.visibility || 0) / 30000, 0, 1))
   };
+  const targetTracks = buildTargetTracks(location, nextEight.map((item) => item.time), forecast.utc_offset_seconds || 0);
+  const moonWindow = bestScore >= 72 ? "Best faint-object window" : "Better for brighter targets";
+  const moonwatch = {
+    title: `${todayMoon.name} · ${todayMoon.illumination}% lit`,
+    subtitle: describeMoonImpact(todayMoon.illumination, astroNightHours),
+    items: [
+      ["Darkness score", `${darknessScore}/100`, hasAstronomicalNight ? `${darkHoursLabel} of astronomical night` : "No fully dark astronomical window"],
+      ["Best use", moonWindow, `Peak weather score near ${bestPeak}`],
+      ["Twilight span", `${nauticalDusk} - ${nauticalDawn}`, hasAstronomicalNight ? "Nautical dusk to dawn" : "Late twilight all night"]
+    ],
+    note: hasAstronomicalNight
+      ? `Faint targets should improve once darkness settles in at ${darkStart}.`
+      : "Lean toward brighter targets or wide-field scenes because full darkness never arrives tonight."
+  };
 
   return {
     heroTitle: `Best viewing window starts around ${bestStart} and peaks near ${bestPeak}.`,
@@ -428,6 +514,9 @@ function deriveSummary(location, forecast) {
     chart: scored.map((item) => item.score),
     statusItems,
     trendSeries,
+    targetTracks,
+    targetLabels: nextEight.map((item) => formatClock(item.time)),
+    moonwatch,
     moon: todayMoon,
     bestStart,
     bestPeak,
@@ -523,6 +612,8 @@ function renderSummary(location, forecast) {
 
   renderTrendChart(summary.trendSeries);
   renderMap(location, summary);
+  renderTargetChart(summary.targetTracks, summary.targetLabels);
+  renderMoonwatch(summary.moonwatch);
   renderTargets();
 }
 
@@ -705,6 +796,76 @@ function renderMap(location, summary) {
       <small>${summary.weatherSummary}</small>
     </div>
   `;
+}
+
+function renderTargetChart(tracks, labels) {
+  const width = 640;
+  const height = 260;
+  const padding = 24;
+  if (!tracks.length) {
+    els.targetChart.innerHTML = `
+      <rect x="0" y="0" width="${width}" height="${height}" fill="rgba(0,0,0,0)" />
+      <text x="50%" y="50%" text-anchor="middle" fill="rgba(154,183,202,0.9)" font-size="18">
+        No featured targets are high enough right now.
+      </text>
+    `;
+    els.targetLegend.innerHTML = "<span>Try a different location or a later night window.</span>";
+    els.targetAxis.innerHTML = labels.map((label) => `<span>${label}</span>`).join("");
+    return;
+  }
+
+  const grid = [0.25, 0.5, 0.75]
+    .map((value) => {
+      const y = height - padding - value * (height - padding * 2);
+      const altitude = Math.round(value * 80);
+      return `
+        <line x1="${padding}" y1="${y}" x2="${width - padding}" y2="${y}" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+        <text x="${padding + 8}" y="${y - 8}" fill="rgba(154,183,202,0.75)" font-size="12">${altitude}°</text>
+      `;
+    })
+    .join("");
+
+  els.targetChart.innerHTML = `
+    <rect x="0" y="0" width="${width}" height="${height}" fill="rgba(0,0,0,0)" />
+    ${grid}
+    ${tracks.map((track, index) => `
+      <polyline
+        fill="none"
+        stroke="${targetColors[index]}"
+        stroke-width="3"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        points="${toPolyline(track.points, width, height, padding)}"
+      />
+    `).join("")}
+  `;
+
+  els.targetLegend.innerHTML = tracks
+    .map(
+      (track, index) => `<span><i class="legend-dot target-${String.fromCharCode(97 + index)}"></i>${track.name}</span>`
+    )
+    .join("");
+
+  els.targetAxis.innerHTML = labels.map((label) => `<span>${label}</span>`).join("");
+}
+
+function renderMoonwatch(moonwatch) {
+  els.moonwatchTitle.textContent = moonwatch.title;
+  els.moonwatchSubtitle.textContent = moonwatch.subtitle;
+  els.moonwatchGrid.innerHTML = moonwatch.items
+    .map(
+      ([label, value, note]) => `
+        <div class="moonwatch-item">
+          <div>
+            <span>${label}</span>
+            <small>${note}</small>
+          </div>
+          <strong>${value}</strong>
+        </div>
+      `
+    )
+    .join("");
+  els.moonwatchNote.textContent = moonwatch.note;
 }
 
 async function loadLocation(location, statusMessage) {

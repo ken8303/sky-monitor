@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260531b" />
+    <link rel="stylesheet" href="styles.css?v=20260531d" />
   </head>
   <body>
     <div class="page-shell">
@@ -177,6 +177,42 @@
           </article>
         </section>
 
+        <section class="astronomy-grid">
+          <article class="card panel target-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Sky Targets</p>
+                <h3>Altitude tracks for tonight</h3>
+              </div>
+            </div>
+            <div class="chart-legend" id="target-legend"></div>
+            <div class="trend-chart-wrap">
+              <svg id="target-chart" class="trend-chart" viewBox="0 0 640 260" role="img" aria-label="Target altitude chart"></svg>
+            </div>
+            <div class="trend-axis" id="target-axis"></div>
+          </article>
+
+          <article class="card panel moonwatch-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Moon Watch</p>
+                <h3>Darkness and faint target impact</h3>
+              </div>
+            </div>
+            <div class="moonwatch-phase">
+              <div class="moon-card">
+                <div class="moon"></div>
+              </div>
+              <div class="moonwatch-copy">
+                <strong id="moonwatch-title">Waxing crescent</strong>
+                <span id="moonwatch-subtitle">Low moon impact tonight</span>
+              </div>
+            </div>
+            <div class="moonwatch-grid" id="moonwatch-grid"></div>
+            <p class="panel-note" id="moonwatch-note"></p>
+          </article>
+        </section>
+
         <section class="insight-grid">
           <article class="card panel">
             <div class="panel-head">
@@ -233,6 +269,6 @@
       </main>
     </div>
 
-    <script src="script.js?v=20260531b"></script>
+    <script src="script.js?v=20260531d"></script>
   </body>
 </html>
