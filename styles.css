@@ -236,6 +236,12 @@ a {
   grid-template-columns: 1.15fr 0.85fr;
 }
 
+.runbook-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1.15fr 0.85fr;
+}
+
 .card {
   border: 1px solid var(--line);
   background: linear-gradient(180deg, var(--bg-soft), var(--panel-strong));
@@ -638,6 +644,71 @@ a {
   font-size: 1.12rem;
 }
 
+.runbook-list,
+.alerts-list {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.runbook-item,
+.alert-item {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.runbook-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.runbook-time {
+  min-width: 74px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(122, 240, 212, 0.08);
+  border: 1px solid rgba(122, 240, 212, 0.16);
+  color: var(--accent);
+  font-family: "Space Grotesk", sans-serif;
+  text-align: center;
+}
+
+.runbook-copy strong,
+.alert-item strong {
+  display: block;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.08rem;
+}
+
+.runbook-copy span,
+.runbook-copy small,
+.alert-item span,
+.alert-item small {
+  color: var(--muted);
+}
+
+.alert-item {
+  display: grid;
+  gap: 8px;
+}
+
+.alert-chip {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 199, 122, 0.18);
+  background: rgba(255, 199, 122, 0.12);
+  color: #ffe3b8;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .panel {
   padding: 22px;
   background: linear-gradient(180deg, rgba(10, 33, 49, 0.78), rgba(8, 24, 36, 0.88));
@@ -908,6 +979,7 @@ a {
   .telemetry-grid,
   .astronomy-grid,
   .atmosphere-grid,
+  .runbook-grid,
   .status-strip {
     grid-template-columns: 1fr;
   }
@@ -947,6 +1019,7 @@ a {
   .map-meta,
   .map-spotlight,
   .seeing-card,
+  .runbook-item,
   .moonwatch-phase,
   .moonwatch-item {
     grid-template-columns: 1fr;

@@ -218,6 +218,9 @@ const els = {
   layerAxis: document.querySelector("#layer-axis"),
   seeingGrid: document.querySelector("#seeing-grid"),
   seeingNote: document.querySelector("#seeing-note"),
+  runbookList: document.querySelector("#runbook-list"),
+  alertsList: document.querySelector("#alerts-list"),
+  alertsNote: document.querySelector("#alerts-note"),
   targetLegend: document.querySelector("#target-legend"),
   targetChart: document.querySelector("#target-chart"),
   targetAxis: document.querySelector("#target-axis"),
@@ -351,6 +354,31 @@ function seeingLabel(score) {
     return "Soft";
   }
   return "Restless";
+}
+
+function runPhaseForHour(item, bestScore) {
+  if (item.score >= Math.max(72, bestScore - 4)) {
+    return ["Prime window", "Best time for faint targets or your main imaging run."];
+  }
+  if (item.isNight && item.score >= 56) {
+    return ["Workable window", "Good for bright targets, framing, and flexible observing."];
+  }
+  if (!item.isNight) {
+    return ["Setup window", "Use this stretch for alignment, framing, and gear checks."];
+  }
+  return ["Fallback window", "Conditions are softer, so switch to bright targets or pause."];
+}
+
+function buildRunbook(summary) {
+  return summary.runbookSource.map((item) => {
+    const [phase, detail] = runPhaseForHour(item, summary.bestScore);
+    const modeHint = state.mode === "photo"
+      ? (item.score >= 70 ? "Start the longer capture block here." : "Keep exposures shorter and watch the histogram.")
+      : state.mode === "travel"
+        ? (item.score >= 60 ? "Worth staying on site for this stretch." : "Good moment to reset, warm up, or relocate.")
+        : (item.score >= 70 ? "Lean into galaxies, nebulae, or tighter planetary work." : "Favor clusters, planets, or casual sweeping.");
+    return [item.label, phase, detail, modeHint];
+  });
 }
 
 function buildTargetTracks(location, times, utcOffsetSeconds) {
@@ -511,6 +539,25 @@ function deriveSummary(location, forecast) {
   const atmosphereNote = seeingScore >= 68
     ? "The atmosphere looks stable enough for planets and tighter framing if the cloud timing cooperates."
     : "The sky may still be worth using, but softer seeing and layer shifts make this a night to stay flexible.";
+  const runbookSource = scored.map((item) => ({
+    label: formatClock(item.time),
+    score: item.score,
+    isNight: item.isNight
+  }));
+  const alerts = [
+    current.wind_speed_10m >= 18
+      ? ["Wind load", "Medium risk", `Wind is already ${Math.round(current.wind_speed_10m)} km/h, so mount shake may limit longer focal lengths.`]
+      : ["Wind load", "Low risk", `Wind is ${Math.round(current.wind_speed_10m)} km/h, so mechanical stability looks manageable right now.`],
+    dewGap <= 4
+      ? ["Moisture", "High risk", `The dew gap is only ${dewGap.toFixed(1)}°C, so heaters or wipes may matter sooner than expected.`]
+      : ["Moisture", "Moderate risk", `The dew gap is ${dewGap.toFixed(1)}°C, which buys some time before condensation pressure rises.`],
+    bestScore < 58
+      ? ["Cloud timing", "Watch closely", "The best upcoming score stays fairly modest, so treat the night as opportunistic rather than fixed."]
+      : ["Cloud timing", "Promising", `There is a stronger lane near ${bestPeak}, so shape the session around that window.`]
+  ];
+  const alertsNote = bestScore >= 70
+    ? "The night has a real high-value stretch, but the watchouts still matter if you are setting up heavier gear."
+    : "This is the kind of night where fast decisions help more than a rigid plan, so keep the setup adaptable.";
   const mapSpotlight = [
     ["Current sky", currentLabel, `${current.cloud_cover}% cloud cover now`],
     ["Peak hour", bestPeak, `${qualityBadge(bestScore)} viewing window`],
@@ -576,6 +623,9 @@ function deriveSummary(location, forecast) {
     layerBreakdown,
     atmosphereCards,
     atmosphereNote,
+    runbookSource,
+    alerts,
+    alertsNote,
     mapSpotlight,
     targetTracks,
     targetLabels: nextEight.map((item) => formatClock(item.time)),
@@ -609,6 +659,8 @@ function renderTargets() {
   els.modeButtons.forEach((button) => {
     button.classList.toggle("is-active", button.dataset.mode === state.mode);
   });
+
+  renderRunbook(buildRunbook(state.liveSummary), state.liveSummary.alerts, state.liveSummary.alertsNote);
 }
 
 function renderSummary(location, forecast) {
@@ -927,6 +979,37 @@ function renderAtmosphere(cards, note) {
     )
     .join("");
   els.seeingNote.textContent = note;
+}
+
+function renderRunbook(runbook, alerts, alertsNote) {
+  els.runbookList.innerHTML = runbook
+    .map(
+      ([time, phase, detail, hint]) => `
+        <div class="runbook-item">
+          <div class="runbook-time">${time}</div>
+          <div class="runbook-copy">
+            <strong>${phase}</strong>
+            <span>${detail}</span>
+            <small>${hint}</small>
+          </div>
+        </div>
+      `
+    )
+    .join("");
+
+  els.alertsList.innerHTML = alerts
+    .map(
+      ([title, level, detail]) => `
+        <div class="alert-item">
+          <span class="alert-chip">${level}</span>
+          <strong>${title}</strong>
+          <small>${detail}</small>
+        </div>
+      `
+    )
+    .join("");
+
+  els.alertsNote.textContent = alertsNote;
 }
 
 function renderTargetChart(tracks, labels) {
