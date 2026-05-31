@@ -74,6 +74,8 @@ const els = {
   objectTitle: document.querySelector("#object-title"),
   objectInfo: document.querySelector("#object-info"),
   objectNote: document.querySelector("#object-note"),
+  targetTimeline: document.querySelector("#target-timeline"),
+  timelineNote: document.querySelector("#timeline-note"),
   visibleList: document.querySelector("#visible-list")
 };
 
@@ -220,6 +222,32 @@ function buildTonightSuggestion(location) {
   };
 }
 
+function buildSelectedTimeline(location, object) {
+  const now = new Date();
+  const samples = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(now.getTime() + index * 2 * 3600000);
+    const coords = astro.altAz(date, location.latitude, location.longitude, object.ra, object.dec);
+    return {
+      label: formatClock(date),
+      altitude: Math.round(coords.altitude),
+      visible: coords.altitude > 0
+    };
+  });
+
+  const visibleSamples = samples.filter((sample) => sample.visible);
+  const peak = visibleSamples.reduce(
+    (winner, sample) => (!winner || sample.altitude > winner.altitude ? sample : winner),
+    null
+  );
+
+  return {
+    samples,
+    note: peak
+      ? `${object.name} reaches its strongest placement near ${peak.label} at about ${peak.altitude}° altitude.`
+      : `${object.name} stays below the horizon for the next several hours at this location.`
+  };
+}
+
 function drawSky() {
   const width = els.canvas.width;
   const height = els.canvas.height;
@@ -326,7 +354,7 @@ function drawSky() {
   els.canvasFooter.textContent = `Showing ${ranked.length} objects above the horizon. Toggle labels, constellations, or atmosphere to simplify the view.`;
 
   renderTonightSuggestion(location);
-  renderInfo(selected, selectedPoint, ranked);
+  renderInfo(selected, selectedPoint, ranked, location);
   renderVisibleList(ranked);
 }
 
@@ -346,7 +374,7 @@ function renderTonightSuggestion(location) {
   els.tonightNote.textContent = tonight.note;
 }
 
-function renderInfo(selected, selectedPoint, ranked) {
+function renderInfo(selected, selectedPoint, ranked, location) {
   const visible = ranked.find((item) => item.name === selected.name);
   els.objectTitle.textContent = selected.name;
   const infoItems = [
@@ -367,6 +395,26 @@ function renderInfo(selected, selectedPoint, ranked) {
     .join("");
 
   els.objectNote.textContent = selected.note;
+  renderSelectedTimeline(location, selected);
+}
+
+function renderSelectedTimeline(location, object) {
+  const timeline = buildSelectedTimeline(location, object);
+  els.targetTimeline.innerHTML = timeline.samples
+    .map((sample) => {
+      const height = sample.visible ? clamp((sample.altitude / 90) * 100, 8, 100) : 6;
+      return `
+        <div class="timeline-col">
+          <strong>${sample.label}</strong>
+          <div class="timeline-bar-wrap">
+            <div class="timeline-bar" style="height:${height}%"></div>
+          </div>
+          <span>${sample.visible ? `${sample.altitude}°` : "Below"}</span>
+        </div>
+      `;
+    })
+    .join("");
+  els.timelineNote.textContent = timeline.note;
 }
 
 function renderVisibleList(ranked) {
