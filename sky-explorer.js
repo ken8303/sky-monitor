@@ -23,6 +23,51 @@ const objectCatalog = [
   { name: "Omega Centauri", type: "Globular cluster", ra: 13.447, dec: -47.479, mag: 3.7, note: "Spectacular southern globular cluster, best from lower latitudes." }
 ];
 
+const objectPhotos = {
+  "Andromeda Galaxy": {
+    src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/The%20Andromeda%20Galaxy.jpg",
+    title: "Andromeda Galaxy photo",
+    credit: "Wikimedia Commons",
+    href: "https://commons.wikimedia.org/wiki/File:The_Andromeda_Galaxy.jpg"
+  },
+  "Orion Nebula": {
+    src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/The%20Orion%20Nebula%20%28M42%29%20%28eso0421a%29.jpg",
+    title: "Orion Nebula photo",
+    credit: "Wikimedia Commons",
+    href: "https://commons.wikimedia.org/wiki/File:The_Orion_Nebula_(M42)_(eso0421a).jpg"
+  },
+  "Pleiades": {
+    src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Pleiades%20large.jpg",
+    title: "Pleiades photo",
+    credit: "Wikimedia Commons",
+    href: "https://commons.wikimedia.org/wiki/File:Pleiades_large.jpg"
+  },
+  "Ring Nebula": {
+    src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Ring%20Nebula%20-%20GPN-2000-000964.jpg",
+    title: "Ring Nebula photo",
+    credit: "Wikimedia Commons",
+    href: "https://commons.wikimedia.org/wiki/File:Ring_Nebula_-_GPN-2000-000964.jpg"
+  },
+  "Lagoon Nebula": {
+    src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Lagoon%20Nebula.jpg",
+    title: "Lagoon Nebula photo",
+    credit: "Wikimedia Commons",
+    href: "https://commons.wikimedia.org/wiki/File:Lagoon_Nebula.jpg"
+  },
+  "Omega Centauri": {
+    src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Omega%20Centauri%20%28b09%29.jpg",
+    title: "Omega Centauri photo",
+    credit: "Wikimedia Commons",
+    href: "https://commons.wikimedia.org/wiki/File:Omega_Centauri_(b09).jpg"
+  },
+  "Triangulum Galaxy": {
+    src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/The%20Triangulum%20Galaxy%20%28b13%29.jpg",
+    title: "Triangulum Galaxy photo",
+    credit: "Wikimedia Commons",
+    href: "https://commons.wikimedia.org/wiki/File:The_Triangulum_Galaxy_(b13).jpg"
+  }
+};
+
 const brightStars = [
   { name: "Dubhe", ra: 11.06, dec: 61.75, mag: 1.79 },
   { name: "Merak", ra: 11.03, dec: 56.38, mag: 2.34 },
@@ -75,6 +120,7 @@ const els = {
   tonightGrid: document.querySelector("#tonight-grid"),
   tonightNote: document.querySelector("#tonight-note"),
   objectTitle: document.querySelector("#object-title"),
+  objectPhotoWrap: document.querySelector("#object-photo-wrap"),
   objectInfo: document.querySelector("#object-info"),
   objectNote: document.querySelector("#object-note"),
   targetTimeline: document.querySelector("#target-timeline"),
@@ -429,8 +475,33 @@ function renderInfo(selected, selectedPoint, ranked, location) {
     )
     .join("");
 
+  renderObjectPhoto(selected);
   els.objectNote.textContent = selected.note;
   renderSelectedTimeline(location, selected);
+}
+
+function renderObjectPhoto(selected) {
+  const photo = objectPhotos[selected.name];
+
+  if (!photo) {
+    els.objectPhotoWrap.innerHTML = `
+      <div class="object-photo-fallback">
+        <div>
+          <strong>No photo in the current library</strong>
+          <span>This object is shown on the sky map, but a dedicated deep-sky image preview is not attached yet.</span>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  els.objectPhotoWrap.innerHTML = `
+    <img class="object-photo" src="${photo.src}" alt="${photo.title}" loading="lazy" />
+    <div class="object-photo-credit">
+      <strong>${selected.name}</strong>
+      <span>Photo source: <a href="${photo.href}" target="_blank" rel="noreferrer">${photo.credit}</a></span>
+    </div>
+  `;
 }
 
 function renderSelectedTimeline(location, object) {

@@ -267,6 +267,58 @@ select {
   gap: 12px;
 }
 
+.object-photo-wrap {
+  margin-top: 18px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(10, 22, 34, 0.9), rgba(6, 15, 24, 0.92));
+}
+
+.object-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: #020814;
+}
+
+.object-photo-fallback {
+  aspect-ratio: 16 / 10;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255, 226, 156, 0.18), transparent 18%),
+    radial-gradient(circle at 30% 32%, rgba(122, 240, 212, 0.1), transparent 10%),
+    radial-gradient(circle at 68% 28%, rgba(137, 186, 255, 0.12), transparent 12%),
+    linear-gradient(180deg, rgba(6, 18, 28, 0.96), rgba(3, 9, 16, 1));
+}
+
+.object-photo-fallback strong,
+.object-photo-credit strong {
+  display: block;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.object-photo-fallback span,
+.object-photo-credit span,
+.object-photo-credit a {
+  color: var(--muted);
+}
+
+.object-photo-credit {
+  padding: 12px 14px;
+  display: grid;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.object-photo-credit a {
+  text-decoration: none;
+}
+
 .target-timeline {
   margin-top: 18px;
   display: grid;
