@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sky Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="sky-explorer.css?v=20260531a" />
+  </head>
+  <body>
+    <div class="sky-shell">
+      <div class="glow glow-a"></div>
+      <div class="glow glow-b"></div>
+
+      <header class="sky-topbar">
+        <div>
+          <p class="eyebrow">Interactive Planetarium</p>
+          <h1>Sky Explorer</h1>
+          <p class="subcopy">A live sky-map page inspired by the feel of Stellarium-style planetarium tools.</p>
+        </div>
+        <nav class="sky-nav" aria-label="Primary">
+          <a href="index.html">Dashboard</a>
+          <a href="#sky-stage">Sky Map</a>
+          <a href="#sky-sidebar">Objects</a>
+        </nav>
+      </header>
+
+      <main class="sky-layout">
+        <section class="control-bar card">
+          <label class="field">
+            <span>Location</span>
+            <select id="explorer-location">
+              <option value="dartmoor">Dartmoor, UK</option>
+              <option value="sedona">Sedona, Arizona</option>
+              <option value="lofoten">Lofoten, Norway</option>
+            </select>
+          </label>
+
+          <label class="field field-wide">
+            <span>Find object</span>
+            <input id="object-search" list="object-options" type="text" placeholder="Search star, nebula, or galaxy" />
+            <datalist id="object-options"></datalist>
+          </label>
+
+          <label class="field">
+            <span>Hours from now</span>
+            <input id="time-slider" type="range" min="-12" max="12" step="1" value="0" />
+          </label>
+
+          <div class="control-actions">
+            <button type="button" class="pill is-active" data-toggle="labels">Labels</button>
+            <button type="button" class="pill is-active" data-toggle="constellations">Constellations</button>
+            <button type="button" class="pill is-active" data-toggle="atmosphere">Atmosphere</button>
+            <button type="button" class="pill" id="reset-time">Now</button>
+          </div>
+        </section>
+
+        <section class="viewer-grid">
+          <article class="sky-stage card" id="sky-stage">
+            <div class="stage-head">
+              <div>
+                <p class="eyebrow">Live Sky</p>
+                <h2 id="stage-title">Sky above Dartmoor, UK</h2>
+              </div>
+              <div class="stage-meta">
+                <strong id="stage-time">Now</strong>
+                <small id="stage-coords">50.570°N, 3.920°W</small>
+              </div>
+            </div>
+            <div class="canvas-wrap">
+              <canvas id="sky-canvas" width="1200" height="900" aria-label="Interactive sky map"></canvas>
+            </div>
+            <div class="canvas-footer" id="canvas-footer"></div>
+          </article>
+
+          <aside class="sky-sidebar" id="sky-sidebar">
+            <article class="card panel info-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Selected Object</p>
+                  <h3 id="object-title">Andromeda Galaxy</h3>
+                </div>
+              </div>
+              <div class="info-grid" id="object-info"></div>
+              <p class="panel-note" id="object-note"></p>
+            </article>
+
+            <article class="card panel visible-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Visible Tonight</p>
+                  <h3>Highest-value targets</h3>
+                </div>
+              </div>
+              <div class="visible-list" id="visible-list"></div>
+            </article>
+          </aside>
+        </section>
+      </main>
+    </div>
+
+    <script src="sky-explorer.js?v=20260531a"></script>
+  </body>
+</html>
