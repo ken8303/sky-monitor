@@ -146,6 +146,7 @@ const els = {
   searchStatus: document.querySelector("#search-status"),
   deviceLocationButton: document.querySelector("#device-location-button"),
   sourceNote: document.querySelector("#source-note"),
+  statusStrip: document.querySelector("#status-strip"),
   heroEyebrow: document.querySelector("#hero-eyebrow"),
   heroTitle: document.querySelector("#hero-title"),
   heroText: document.querySelector("#hero-text"),
@@ -166,6 +167,10 @@ const els = {
   targetList: document.querySelector("#target-list"),
   quicklook: document.querySelector("#quicklook"),
   chartBars: document.querySelector("#chart-bars"),
+  trendChart: document.querySelector("#trend-chart"),
+  trendAxis: document.querySelector("#trend-axis"),
+  mapFrame: document.querySelector("#location-map"),
+  mapMeta: document.querySelector("#map-meta"),
   modeButtons: document.querySelectorAll("[data-mode]"),
   planButton: document.querySelector("#plan-button"),
   locationButton: document.querySelector("#location-button")
@@ -365,6 +370,21 @@ function deriveSummary(location, forecast) {
     ? `${todayMoon.name} at ${todayMoon.illumination}% illumination, with nautical twilight from ${nauticalDusk} to ${nauticalDawn}.`
     : `${todayMoon.name} at ${todayMoon.illumination}% illumination, with nautical twilight from ${nauticalDusk} to ${nauticalDawn}. The sky stays in late twilight rather than becoming fully dark.`;
   const darkHoursLabel = hasAstronomicalNight ? `${astroNightHours.toFixed(1)}h` : "0.0h";
+  const visibilityNow = Math.round((hourly.visibility[0] || 0) / 1000);
+  const pressureNow = current.pressure_msl ? `${Math.round(current.pressure_msl)} hPa` : "Model";
+  const statusItems = [
+    { label: "Visibility", value: `${visibilityNow} km`, note: "Current model estimate" },
+    { label: "Wind", value: `${Math.round(current.wind_speed_10m)} km/h`, note: "Surface flow" },
+    { label: "Pressure", value: pressureNow, note: "Air mass signal" },
+    { label: "Darkness", value: darkHoursLabel, note: hasAstronomicalNight ? "Astronomical night" : "Late twilight only" }
+  ];
+  const trendSeries = {
+    labels: nextEight.map((item) => formatClock(item.time)),
+    cloud: nextEight.map((item) => clamp(item.cloud_cover / 100, 0, 1)),
+    humidity: nextEight.map((item) => clamp(item.relative_humidity_2m / 100, 0, 1)),
+    wind: nextEight.map((item) => clamp(item.wind_speed_10m / 30, 0, 1)),
+    visibility: nextEight.map((item) => clamp((item.visibility || 0) / 30000, 0, 1))
+  };
 
   return {
     heroTitle: `Best viewing window starts around ${bestStart} and peaks near ${bestPeak}.`,
@@ -406,6 +426,8 @@ function deriveSummary(location, forecast) {
       ["Dark Hours", darkHoursLabel, `Score ${darknessScore}/100`]
     ],
     chart: scored.map((item) => item.score),
+    statusItems,
+    trendSeries,
     moon: todayMoon,
     bestStart,
     bestPeak,
@@ -446,6 +468,7 @@ function renderSummary(location, forecast) {
   els.heroTitle.textContent = summary.heroTitle;
   els.heroText.textContent = summary.heroText;
   els.heroStats.innerHTML = summary.stats.map(makeStat).join("");
+  renderStatusStrip(summary.statusItems);
   els.qualityBadge.textContent = summary.badge;
   els.qualityNote.textContent = summary.note;
   els.sourceNote.textContent = `Forecast timezone: ${forecast.timezone}. Live weather from Open-Meteo, moon phase estimated in-browser.`;
@@ -498,6 +521,8 @@ function renderSummary(location, forecast) {
     )
     .join("");
 
+  renderTrendChart(summary.trendSeries);
+  renderMap(location, summary);
   renderTargets();
 }
 
@@ -510,6 +535,7 @@ async function fetchForecast(location) {
       "relative_humidity_2m",
       "cloud_cover",
       "wind_speed_10m",
+      "pressure_msl",
       "weather_code"
     ].join(","),
     hourly: [
@@ -606,6 +632,79 @@ function coordinatesLabel(latitude, longitude) {
   const ns = latitude >= 0 ? "N" : "S";
   const ew = longitude >= 0 ? "E" : "W";
   return `${Math.abs(latitude).toFixed(3)}°${ns}, ${Math.abs(longitude).toFixed(3)}°${ew}`;
+}
+
+function mapEmbedUrl(latitude, longitude) {
+  const latOffset = 0.25;
+  const lonOffset = 0.45;
+  const left = longitude - lonOffset;
+  const right = longitude + lonOffset;
+  const top = latitude + latOffset;
+  const bottom = latitude - latOffset;
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${latitude}%2C${longitude}`;
+}
+
+function toPolyline(points, width, height, padding) {
+  return points
+    .map((value, index) => {
+      const x = padding + (index * (width - padding * 2)) / Math.max(points.length - 1, 1);
+      const y = height - padding - value * (height - padding * 2);
+      return `${x},${y}`;
+    })
+    .join(" ");
+}
+
+function renderTrendChart(series) {
+  const width = 640;
+  const height = 260;
+  const padding = 24;
+  const grid = [0.2, 0.4, 0.6, 0.8]
+    .map((value) => {
+      const y = height - padding - value * (height - padding * 2);
+      return `<line x1="${padding}" y1="${y}" x2="${width - padding}" y2="${y}" stroke="rgba(255,255,255,0.08)" stroke-width="1" />`;
+    })
+    .join("");
+
+  els.trendChart.innerHTML = `
+    <rect x="0" y="0" width="${width}" height="${height}" fill="rgba(0,0,0,0)" />
+    ${grid}
+    <polyline fill="none" stroke="#86b8ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${toPolyline(series.cloud, width, height, padding)}" />
+    <polyline fill="none" stroke="#7af0d4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${toPolyline(series.humidity, width, height, padding)}" />
+    <polyline fill="none" stroke="#ffc77a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${toPolyline(series.wind, width, height, padding)}" />
+    <polyline fill="none" stroke="#ef8fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${toPolyline(series.visibility, width, height, padding)}" />
+  `;
+
+  els.trendAxis.innerHTML = series.labels.map((label) => `<span>${label}</span>`).join("");
+}
+
+function renderStatusStrip(items) {
+  els.statusStrip.innerHTML = items
+    .map(
+      (item) => `
+        <article class="status-card">
+          <span>${item.label}</span>
+          <strong>${item.value}</strong>
+          <small>${item.note}</small>
+        </article>
+      `
+    )
+    .join("");
+}
+
+function renderMap(location, summary) {
+  els.mapFrame.src = mapEmbedUrl(location.latitude, location.longitude);
+  els.mapMeta.innerHTML = `
+    <div>
+      <span>Area</span>
+      <strong>${location.name}</strong>
+      <small>${coordinatesLabel(location.latitude, location.longitude)}</small>
+    </div>
+    <div>
+      <span>Night window</span>
+      <strong>${summary.darkStart && summary.darkEnd ? `${summary.darkStart} - ${summary.darkEnd}` : "Late twilight"}</strong>
+      <small>${summary.weatherSummary}</small>
+    </div>
+  `;
 }
 
 async function loadLocation(location, statusMessage) {

@@ -211,6 +211,20 @@ a {
   margin: 0 auto;
 }
 
+.status-strip,
+.telemetry-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.status-strip {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.telemetry-grid {
+  grid-template-columns: 1.2fr 0.8fr;
+}
+
 .card {
   border: 1px solid var(--line);
   background: linear-gradient(180deg, var(--bg-soft), var(--panel-strong));
@@ -282,6 +296,27 @@ a {
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.status-card {
+  padding: 16px 18px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(10, 33, 49, 0.88), rgba(8, 24, 36, 0.92));
+}
+
+.status-card span,
+.map-meta span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.status-card strong,
+.map-meta strong {
+  display: block;
+  margin: 8px 0 4px;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.25rem;
+}
+
 .stat span,
 .mini-forecast span,
 .timeline-row.labels span {
@@ -319,6 +354,94 @@ a {
   display: grid;
   gap: 20px;
   grid-template-columns: 1.2fr 0.8fr;
+}
+
+.telemetry-panel,
+.map-panel {
+  min-height: 100%;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  border-radius: 999px;
+}
+
+.legend-dot.cloud {
+  background: #86b8ff;
+}
+
+.legend-dot.humidity {
+  background: #7af0d4;
+}
+
+.legend-dot.wind {
+  background: #ffc77a;
+}
+
+.legend-dot.visibility {
+  background: #ef8fff;
+}
+
+.trend-chart-wrap {
+  margin-top: 18px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(6, 20, 30, 0.88), rgba(4, 14, 22, 0.92));
+}
+
+.trend-chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.trend-axis {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.trend-axis span {
+  text-align: center;
+}
+
+.map-frame-wrap {
+  margin-top: 18px;
+  min-height: 320px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.map-frame-wrap iframe {
+  width: 100%;
+  min-height: 320px;
+  border: 0;
+  display: block;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.map-meta {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 16px;
 }
 
 .panel {
@@ -587,7 +710,9 @@ a {
   .forecast-grid,
   .conditions-grid,
   .planner-grid,
-  .insight-grid {
+  .insight-grid,
+  .telemetry-grid,
+  .status-strip {
     grid-template-columns: 1fr;
   }
 
@@ -622,7 +747,8 @@ a {
   .timeline-row,
   .mini-forecast li,
   .metric,
-  .quick-item {
+  .quick-item,
+  .map-meta {
     grid-template-columns: 1fr;
   }
 
