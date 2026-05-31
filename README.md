@@ -1,37 +1,48 @@
 # Sky Monitor
 
-Sky Monitor is a responsive astronomy planning dashboard inspired by modern night-sky tools.
+Sky Monitor is a responsive astronomy planning dashboard inspired by modern night-sky tools. It is designed as a polished static front end for planning observing sessions, comparing sky conditions, and exploring different viewing locations.
 
-## What It Includes
+## Live Demo
 
-- Location-based observing dashboard
-- Dynamic night-quality timeline
-- Forecast and conditions panels
+[Open the live site](https://ken8303.github.io/sky-monitor/)
+
+## Highlights
+
+- Responsive astronomy dashboard with a strong visual identity
+- Switchable observing locations with tailored mock conditions
+- Night-quality timeline and confidence chart
 - Planner modes for visual, photo, and travel sessions
-- Mobile-friendly layout
-- GitHub Pages deployment workflow
+- GitHub Pages deployment through GitHub Actions
 
-## Files
+## Built With
+
+- `HTML` for structure
+- `CSS` for the glassy night-sky visual system and responsive layout
+- `JavaScript` for client-side state and interaction
+- `GitHub Actions` for deployment
+
+## Project Structure
 
 - `index.html` contains the page structure
 - `styles.css` contains the visual design and responsive layout
 - `script.js` powers the interactive location and planner state
-- `.github/workflows/deploy-pages.yml` publishes the site with GitHub Actions
+- `.github/workflows/deploy-pages.yml` publishes the site with GitHub Pages
 
-## Run Locally
+## Local Development
 
-Open `index.html` directly in a browser, or serve the folder with a simple local web server.
+Open `index.html` directly in a browser, or run a simple static server from the project folder.
 
-## Deploy
+## Deployment
 
-This repository includes a GitHub Actions workflow for GitHub Pages deployment.
+This repository deploys automatically from `main` using GitHub Pages.
 
 1. Push changes to `main`
-2. In GitHub, enable Pages to use GitHub Actions if prompted
-3. After the workflow finishes, the site will be published from the latest commit
+2. GitHub Actions runs the Pages workflow
+3. The published site updates at the live demo URL
 
-## Next Ideas
+## Good Next Steps
 
-- Connect live astronomy and weather APIs
+- Connect real astronomy and weather APIs
 - Save favorite observing locations
-- Add maps, charts, and session history
+- Add a map and richer chart detail
+- Rebuild as React or Next.js if the project grows
