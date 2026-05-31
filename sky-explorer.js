@@ -50,6 +50,7 @@ const constellationLines = [
 
 const state = {
   locationKey: "dartmoor",
+  activeLocation: presetLocations.dartmoor,
   hoursOffset: 0,
   selectedName: "Andromeda Galaxy",
   showLabels: true,
@@ -59,6 +60,8 @@ const state = {
 
 const els = {
   location: document.querySelector("#explorer-location"),
+  deviceLocationButton: document.querySelector("#device-location-button"),
+  locationStatus: document.querySelector("#location-status"),
   search: document.querySelector("#object-search"),
   options: document.querySelector("#object-options"),
   slider: document.querySelector("#time-slider"),
@@ -132,7 +135,7 @@ function clamp(value, min, max) {
 }
 
 function currentLocation() {
-  return presetLocations[state.locationKey];
+  return state.activeLocation;
 }
 
 function targetDate() {
@@ -143,6 +146,38 @@ function coordinatesLabel(latitude, longitude) {
   const ns = latitude >= 0 ? "N" : "S";
   const ew = longitude >= 0 ? "E" : "W";
   return `${Math.abs(latitude).toFixed(3)}°${ns}, ${Math.abs(longitude).toFixed(3)}°${ew}`;
+}
+
+async function reverseGeocode(latitude, longitude) {
+  const params = new URLSearchParams({
+    latitude: String(latitude),
+    longitude: String(longitude),
+    language: "en",
+    format: "json"
+  });
+  const response = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?${params.toString()}`);
+
+  if (!response.ok) {
+    throw new Error("Reverse geocoding failed.");
+  }
+
+  const payload = await response.json();
+  const match = payload.results?.[0];
+  const gps = coordinatesLabel(latitude, longitude);
+
+  if (!match) {
+    return {
+      name: `Your area (${gps})`,
+      latitude,
+      longitude
+    };
+  }
+
+  return {
+    name: [match.name, match.admin1, match.country].filter(Boolean).join(", "),
+    latitude,
+    longitude
+  };
 }
 
 function objectByName(name) {
@@ -448,7 +483,13 @@ function populateOptions() {
 }
 
 els.location.addEventListener("change", () => {
+  const next = presetLocations[els.location.value];
+  if (!next) {
+    return;
+  }
   state.locationKey = els.location.value;
+  state.activeLocation = next;
+  els.locationStatus.textContent = `Using ${next.name}.`;
   drawSky();
 });
 
@@ -470,6 +511,55 @@ els.resetTime.addEventListener("click", () => {
   drawSky();
 });
 
+els.deviceLocationButton.addEventListener("click", () => {
+  if (!navigator.geolocation) {
+    els.locationStatus.textContent = "This browser does not support device location.";
+    return;
+  }
+
+  els.locationStatus.textContent = "Requesting your device location...";
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+
+      try {
+        const location = await reverseGeocode(latitude, longitude);
+        state.locationKey = "custom";
+        state.activeLocation = location;
+        els.location.value = "custom";
+        els.locationStatus.textContent = `Using ${location.name}.`;
+      } catch (error) {
+        const fallback = {
+          name: `Your area (${coordinatesLabel(latitude, longitude)})`,
+          latitude,
+          longitude
+        };
+        state.locationKey = "custom";
+        state.activeLocation = fallback;
+        els.location.value = "custom";
+        els.locationStatus.textContent = `Using ${fallback.name}.`;
+      }
+
+      drawSky();
+    },
+    (error) => {
+      if (error.code === error.PERMISSION_DENIED) {
+        els.locationStatus.textContent = "Location access was denied. Please allow location access in your browser.";
+        return;
+      }
+
+      els.locationStatus.textContent = "Your device location could not be read right now.";
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 300000
+    }
+  );
+});
+
 els.toggles.forEach((button) => {
   button.addEventListener("click", () => {
     const key = button.dataset.toggle;
@@ -489,4 +579,5 @@ els.toggles.forEach((button) => {
 
 populateOptions();
 els.search.value = state.selectedName;
+els.locationStatus.textContent = `Using ${state.activeLocation.name}.`;
 drawSky();

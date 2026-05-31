@@ -155,6 +155,12 @@ select {
   text-transform: uppercase;
 }
 
+.field small,
+.field-note {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .field input,
 .field select {
   padding: 13px 15px;
@@ -163,6 +169,10 @@ select {
   color: var(--text);
   background: rgba(255, 255, 255, 0.05);
   outline: none;
+}
+
+.location-pill {
+  justify-self: start;
 }
 
 .control-actions {
