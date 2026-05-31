@@ -230,6 +230,12 @@ a {
   grid-template-columns: 1.15fr 0.85fr;
 }
 
+.atmosphere-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1.15fr 0.85fr;
+}
+
 .card {
   border: 1px solid var(--line);
   background: linear-gradient(180deg, var(--bg-soft), var(--panel-strong));
@@ -401,6 +407,18 @@ a {
   background: #ef8fff;
 }
 
+.legend-dot.low-cloud {
+  background: #78e0ff;
+}
+
+.legend-dot.mid-cloud {
+  background: #7f97ff;
+}
+
+.legend-dot.high-cloud {
+  background: #f7a6ff;
+}
+
 .trend-chart-wrap {
   margin-top: 18px;
   border-radius: 18px;
@@ -540,6 +558,82 @@ a {
 }
 
 .moonwatch-item strong {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.12rem;
+}
+
+.layer-chart {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 12px;
+  align-items: end;
+  min-height: 230px;
+}
+
+.layer-col {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.layer-stack {
+  width: 100%;
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.layer-segment {
+  width: 100%;
+}
+
+.layer-segment.low {
+  background: linear-gradient(180deg, rgba(120, 224, 255, 0.95), rgba(84, 190, 255, 0.72));
+}
+
+.layer-segment.mid {
+  background: linear-gradient(180deg, rgba(127, 151, 255, 0.95), rgba(98, 112, 224, 0.76));
+}
+
+.layer-segment.high {
+  background: linear-gradient(180deg, rgba(247, 166, 255, 0.92), rgba(194, 111, 226, 0.74));
+}
+
+.layer-total {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.seeing-grid {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.seeing-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.seeing-card span,
+.seeing-card small {
+  color: var(--muted);
+}
+
+.seeing-card strong {
+  display: block;
   font-family: "Space Grotesk", sans-serif;
   font-size: 1.12rem;
 }
@@ -813,6 +907,7 @@ a {
   .insight-grid,
   .telemetry-grid,
   .astronomy-grid,
+  .atmosphere-grid,
   .status-strip {
     grid-template-columns: 1fr;
   }
@@ -851,6 +946,7 @@ a {
   .quick-item,
   .map-meta,
   .map-spotlight,
+  .seeing-card,
   .moonwatch-phase,
   .moonwatch-item {
     grid-template-columns: 1fr;

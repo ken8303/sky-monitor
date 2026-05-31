@@ -214,6 +214,10 @@ const els = {
   mapSpotlight: document.querySelector("#map-spotlight"),
   mapMeta: document.querySelector("#map-meta"),
   mapOverlayButtons: document.querySelectorAll("[data-map-overlay]"),
+  layerChart: document.querySelector("#layer-chart"),
+  layerAxis: document.querySelector("#layer-axis"),
+  seeingGrid: document.querySelector("#seeing-grid"),
+  seeingNote: document.querySelector("#seeing-note"),
   targetLegend: document.querySelector("#target-legend"),
   targetChart: document.querySelector("#target-chart"),
   targetAxis: document.querySelector("#target-axis"),
@@ -334,6 +338,19 @@ function describeMoonImpact(illumination, darkHours) {
     return "Moderate moon impact tonight";
   }
   return "Moonlight will shape target choice";
+}
+
+function seeingLabel(score) {
+  if (score >= 78) {
+    return "Steady";
+  }
+  if (score >= 60) {
+    return "Usable";
+  }
+  if (score >= 42) {
+    return "Soft";
+  }
+  return "Restless";
 }
 
 function buildTargetTracks(location, times, utcOffsetSeconds) {
@@ -466,6 +483,34 @@ function deriveSummary(location, forecast) {
     wind: nextEight.map((item) => clamp(item.wind_speed_10m / 30, 0, 1)),
     visibility: nextEight.map((item) => clamp((item.visibility || 0) / 30000, 0, 1))
   };
+  const layerBreakdown = nextEight.map((item, index) => ({
+    label: formatClock(item.time),
+    low: hourly.cloud_cover_low?.[index] ?? 0,
+    mid: hourly.cloud_cover_mid?.[index] ?? 0,
+    high: hourly.cloud_cover_high?.[index] ?? 0,
+    total: item.cloud_cover
+  }));
+  const seeingScore = Math.round(
+    clamp(
+      100 -
+      current.wind_speed_10m * 1.5 -
+      current.cloud_cover * 0.35 -
+      current.relative_humidity_2m * 0.12,
+      12,
+      95
+    )
+  );
+  const setupStress = Math.round(
+    clamp(current.wind_speed_10m * 2 + Math.max(0, 12 - dewGap) * 2.6, 10, 94)
+  );
+  const atmosphereCards = [
+    ["Seeing", `${seeingScore}/100`, `${seeingLabel(seeingScore)} air for magnified targets`],
+    ["Setup stress", `${setupStress}/100`, `${Math.round(current.wind_speed_10m)} km/h wind and ${dewGap.toFixed(1)}°C dew gap`],
+    ["Upper haze", `${hourly.cloud_cover_high?.[0] ?? 0}%`, "High cloud tends to flatten contrast first"]
+  ];
+  const atmosphereNote = seeingScore >= 68
+    ? "The atmosphere looks stable enough for planets and tighter framing if the cloud timing cooperates."
+    : "The sky may still be worth using, but softer seeing and layer shifts make this a night to stay flexible.";
   const mapSpotlight = [
     ["Current sky", currentLabel, `${current.cloud_cover}% cloud cover now`],
     ["Peak hour", bestPeak, `${qualityBadge(bestScore)} viewing window`],
@@ -528,6 +573,9 @@ function deriveSummary(location, forecast) {
     chart: scored.map((item) => item.score),
     statusItems,
     trendSeries,
+    layerBreakdown,
+    atmosphereCards,
+    atmosphereNote,
     mapSpotlight,
     targetTracks,
     targetLabels: nextEight.map((item) => formatClock(item.time)),
@@ -627,6 +675,8 @@ function renderSummary(location, forecast) {
 
   renderTrendChart(summary.trendSeries);
   renderMap(location, summary);
+  renderLayerBreakdown(summary.layerBreakdown);
+  renderAtmosphere(summary.atmosphereCards, summary.atmosphereNote);
   renderTargetChart(summary.targetTracks, summary.targetLabels);
   renderMoonwatch(summary.moonwatch);
   renderTargets();
@@ -649,6 +699,9 @@ async function fetchForecast(location) {
       "relative_humidity_2m",
       "dew_point_2m",
       "cloud_cover",
+      "cloud_cover_low",
+      "cloud_cover_mid",
+      "cloud_cover_high",
       "wind_speed_10m",
       "visibility",
       "weather_code"
@@ -834,6 +887,46 @@ function renderMap(location, summary) {
       <small>${summary.weatherSummary}</small>
     </div>
   `;
+}
+
+function renderLayerBreakdown(layers) {
+  els.layerChart.innerHTML = layers
+    .map((entry) => {
+      const stackTotal = Math.max(entry.low + entry.mid + entry.high, 1);
+      const lowHeight = (entry.low / stackTotal) * 100;
+      const midHeight = (entry.mid / stackTotal) * 100;
+      const highHeight = (entry.high / stackTotal) * 100;
+      return `
+        <div class="layer-col">
+          <div class="layer-total">${entry.total}%</div>
+          <div class="layer-stack">
+            <div class="layer-segment high" style="height:${highHeight}%"></div>
+            <div class="layer-segment mid" style="height:${midHeight}%"></div>
+            <div class="layer-segment low" style="height:${lowHeight}%"></div>
+          </div>
+        </div>
+      `
+    })
+    .join("");
+
+  els.layerAxis.innerHTML = layers.map((entry) => `<span>${entry.label}</span>`).join("");
+}
+
+function renderAtmosphere(cards, note) {
+  els.seeingGrid.innerHTML = cards
+    .map(
+      ([label, value, detail]) => `
+        <div class="seeing-card">
+          <div>
+            <span>${label}</span>
+            <small>${detail}</small>
+          </div>
+          <strong>${value}</strong>
+        </div>
+      `
+    )
+    .join("");
+  els.seeingNote.textContent = note;
 }
 
 function renderTargetChart(tracks, labels) {

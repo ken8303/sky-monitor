@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260531f" />
+    <link rel="stylesheet" href="styles.css?v=20260531g" />
   </head>
   <body>
     <div class="page-shell">
@@ -222,6 +222,35 @@
           </article>
         </section>
 
+        <section class="atmosphere-grid">
+          <article class="card panel atmosphere-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Atmosphere</p>
+                <h3>Low, mid, and high cloud layers</h3>
+              </div>
+            </div>
+            <div class="chart-legend" id="atmosphere-legend">
+              <span><i class="legend-dot low-cloud"></i>Low cloud</span>
+              <span><i class="legend-dot mid-cloud"></i>Mid cloud</span>
+              <span><i class="legend-dot high-cloud"></i>High cloud</span>
+            </div>
+            <div class="layer-chart" id="layer-chart" aria-label="Cloud layer breakdown"></div>
+            <div class="trend-axis" id="layer-axis"></div>
+          </article>
+
+          <article class="card panel seeing-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Stability</p>
+                <h3>Seeing and setup pressure</h3>
+              </div>
+            </div>
+            <div class="seeing-grid" id="seeing-grid"></div>
+            <p class="panel-note" id="seeing-note"></p>
+          </article>
+        </section>
+
         <section class="insight-grid">
           <article class="card panel">
             <div class="panel-head">
@@ -278,6 +307,6 @@
       </main>
     </div>
 
-    <script src="script.js?v=20260531f"></script>
+    <script src="script.js?v=20260531g"></script>
   </body>
 </html>
