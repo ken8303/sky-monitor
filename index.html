@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sky Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <div class="aurora aurora-a"></div>
+      <div class="aurora aurora-b"></div>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Night Planning Dashboard</p>
+          <h1>Sky Monitor</h1>
+        </div>
+        <label class="location-picker">
+          <span>Location</span>
+          <select id="location-select" aria-label="Choose location">
+            <option value="dartmoor">Dartmoor, UK</option>
+            <option value="sedona">Sedona, Arizona</option>
+            <option value="lofoten">Lofoten, Norway</option>
+          </select>
+        </label>
+        <nav class="topnav" aria-label="Primary">
+          <a href="#overview">Overview</a>
+          <a href="#forecast">Forecast</a>
+          <a href="#conditions">Conditions</a>
+          <a href="#planner">Planner</a>
+        </nav>
+      </header>
+
+      <main class="dashboard">
+        <section class="hero card" id="overview">
+          <div class="hero-copy">
+            <p class="eyebrow" id="hero-eyebrow">Tonight at Dartmoor, UK</p>
+            <h2 id="hero-title">Clearest viewing window starts at 22:40 and peaks near midnight.</h2>
+            <p class="hero-text" id="hero-text"></p>
+            <div class="hero-actions">
+              <button type="button" class="primary" id="plan-button">Open Planner</button>
+              <button type="button" class="secondary" id="location-button">Change Location</button>
+            </div>
+          </div>
+          <div class="hero-stats" id="hero-stats"></div>
+        </section>
+
+        <section class="forecast-grid" id="forecast">
+          <article class="card panel wide">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Best Window Finder</p>
+                <h3>Night quality timeline</h3>
+              </div>
+              <span class="badge good" id="quality-badge">Excellent</span>
+            </div>
+            <div class="timeline" aria-label="Night quality timeline">
+              <div class="timeline-row labels" id="timeline-labels">
+              </div>
+              <div class="timeline-row bars" id="timeline-bars">
+              </div>
+            </div>
+            <p class="panel-note" id="quality-note"></p>
+          </article>
+
+          <article class="card panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">7-Night Outlook</p>
+                <h3>Clear sky trend</h3>
+              </div>
+            </div>
+            <ul class="mini-forecast" id="forecast-list"></ul>
+          </article>
+        </section>
+
+        <section class="conditions-grid" id="conditions">
+          <article class="card panel metric">
+            <div class="ring" style="--value: 86">
+              <span id="transparency-score">86</span>
+            </div>
+            <div>
+              <p class="eyebrow">Transparency</p>
+              <h3 id="transparency-title">Excellent contrast</h3>
+              <p id="transparency-body">Dry upper air and low haze make faint objects easier to pick out.</p>
+            </div>
+          </article>
+
+          <article class="card panel metric">
+            <div class="ring warm" style="--value: 62">
+              <span id="dew-score">62</span>
+            </div>
+            <div>
+              <p class="eyebrow">Dew Point Risk</p>
+              <h3 id="dew-title">Moderate risk later</h3>
+              <p id="dew-body">Lens heaters recommended after 01:00 as surface cooling picks up.</p>
+            </div>
+          </article>
+
+          <article class="card panel metric">
+            <div class="moon-card">
+              <div class="moon"></div>
+            </div>
+            <div>
+              <p class="eyebrow">Moon & Darkness</p>
+              <h3 id="dark-title">Dark window starts 22:18</h3>
+              <p id="dark-body">Moonset before midnight keeps the second half of the night much darker.</p>
+            </div>
+          </article>
+        </section>
+
+        <section class="insight-grid">
+          <article class="card panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Hourly Quality</p>
+                <h3>Session confidence curve</h3>
+              </div>
+            </div>
+            <div class="chart-bars" id="chart-bars" aria-label="Hourly quality chart"></div>
+          </article>
+
+          <article class="card panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Quick Look</p>
+                <h3>Field conditions</h3>
+              </div>
+            </div>
+            <div class="quicklook-grid" id="quicklook"></div>
+          </article>
+        </section>
+
+        <section class="planner-grid" id="planner">
+          <article class="card panel checklist">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Session Planner</p>
+                <h3>Recommended targets</h3>
+              </div>
+              <div class="segmented-control" aria-label="Planning mode">
+                <button type="button" data-mode="visual" class="is-active">Visual</button>
+                <button type="button" data-mode="photo">Photo</button>
+                <button type="button" data-mode="travel">Travel</button>
+              </div>
+            </div>
+            <ul id="target-list"></ul>
+          </article>
+
+          <article class="card panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Live Notes</p>
+                <h3>Field checklist</h3>
+              </div>
+            </div>
+            <div class="notes">
+              <label><input type="checkbox" checked /> Tripod leveled</label>
+              <label><input type="checkbox" checked /> Polar alignment done</label>
+              <label><input type="checkbox" /> Dew heaters on standby</label>
+              <label><input type="checkbox" /> Battery pack topped up</label>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
