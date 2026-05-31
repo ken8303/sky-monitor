@@ -242,6 +242,11 @@ a {
   grid-template-columns: 1.15fr 0.85fr;
 }
 
+.spotlight-grid {
+  display: grid;
+  gap: 20px;
+}
+
 .card {
   border: 1px solid var(--line);
   background: linear-gradient(180deg, var(--bg-soft), var(--panel-strong));
@@ -709,6 +714,64 @@ a {
   text-transform: uppercase;
 }
 
+.spotlight-list {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.spotlight-card {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: grid;
+  gap: 10px;
+}
+
+.spotlight-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.spotlight-rank {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(122, 240, 212, 0.1);
+  border: 1px solid rgba(122, 240, 212, 0.16);
+  color: var(--accent);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.spotlight-type {
+  color: var(--muted);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.spotlight-card strong {
+  display: block;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.18rem;
+}
+
+.spotlight-meta,
+.spotlight-card small {
+  color: var(--muted);
+}
+
+.spotlight-meta {
+  display: grid;
+  gap: 6px;
+}
+
 .panel {
   padding: 22px;
   background: linear-gradient(180deg, rgba(10, 33, 49, 0.78), rgba(8, 24, 36, 0.88));
@@ -980,6 +1043,7 @@ a {
   .astronomy-grid,
   .atmosphere-grid,
   .runbook-grid,
+  .spotlight-grid,
   .status-strip {
     grid-template-columns: 1fr;
   }
@@ -1020,6 +1084,7 @@ a {
   .map-spotlight,
   .seeing-card,
   .runbook-item,
+  .spotlight-list,
   .moonwatch-phase,
   .moonwatch-item {
     grid-template-columns: 1fr;

@@ -27,16 +27,16 @@ const weatherLabels = {
 };
 
 const targetCatalog = [
-  { name: "Andromeda Galaxy", ra: 0.712, dec: 41.269, tags: ["galaxy", "north"] },
-  { name: "Pleiades", ra: 3.79, dec: 24.117, tags: ["cluster", "north"] },
-  { name: "Orion Nebula", ra: 5.588, dec: -5.45, tags: ["nebula", "equatorial"] },
-  { name: "Carina Nebula", ra: 10.75, dec: -59.68, tags: ["nebula", "south"] },
-  { name: "Omega Centauri", ra: 13.447, dec: -47.479, tags: ["cluster", "south"] },
-  { name: "Sombrero Galaxy", ra: 12.633, dec: -11.623, tags: ["galaxy", "equatorial"] },
-  { name: "Lagoon Nebula", ra: 18.05, dec: -24.383, tags: ["nebula", "south"] },
-  { name: "Ring Nebula", ra: 18.884, dec: 33.03, tags: ["planetary", "north"] },
-  { name: "North America Nebula", ra: 20.967, dec: 44.53, tags: ["nebula", "north"] },
-  { name: "Triangulum Galaxy", ra: 1.564, dec: 30.66, tags: ["galaxy", "north"] }
+  { name: "Andromeda Galaxy", ra: 0.712, dec: 41.269, type: "Galaxy", tags: ["galaxy", "north"] },
+  { name: "Pleiades", ra: 3.79, dec: 24.117, type: "Open cluster", tags: ["cluster", "north"] },
+  { name: "Orion Nebula", ra: 5.588, dec: -5.45, type: "Nebula", tags: ["nebula", "equatorial"] },
+  { name: "Carina Nebula", ra: 10.75, dec: -59.68, type: "Nebula", tags: ["nebula", "south"] },
+  { name: "Omega Centauri", ra: 13.447, dec: -47.479, type: "Globular cluster", tags: ["cluster", "south"] },
+  { name: "Sombrero Galaxy", ra: 12.633, dec: -11.623, type: "Galaxy", tags: ["galaxy", "equatorial"] },
+  { name: "Lagoon Nebula", ra: 18.05, dec: -24.383, type: "Nebula", tags: ["nebula", "south"] },
+  { name: "Ring Nebula", ra: 18.884, dec: 33.03, type: "Planetary nebula", tags: ["planetary", "north"] },
+  { name: "North America Nebula", ra: 20.967, dec: 44.53, type: "Nebula", tags: ["nebula", "north"] },
+  { name: "Triangulum Galaxy", ra: 1.564, dec: 30.66, type: "Galaxy", tags: ["galaxy", "north"] }
 ];
 
 const targetColors = ["#ff8e72", "#b4ff8a", "#7fd2ff"];
@@ -221,6 +221,7 @@ const els = {
   runbookList: document.querySelector("#runbook-list"),
   alertsList: document.querySelector("#alerts-list"),
   alertsNote: document.querySelector("#alerts-note"),
+  spotlightList: document.querySelector("#spotlight-list"),
   targetLegend: document.querySelector("#target-legend"),
   targetChart: document.querySelector("#target-chart"),
   targetAxis: document.querySelector("#target-axis"),
@@ -379,6 +380,33 @@ function buildRunbook(summary) {
         : (item.score >= 70 ? "Lean into galaxies, nebulae, or tighter planetary work." : "Favor clusters, planets, or casual sweeping.");
     return [item.label, phase, detail, modeHint];
   });
+}
+
+function buildSpotlight(summary) {
+  const modeWeights = {
+    visual: { galaxy: 1.05, nebula: 1.05, cluster: 1.12, planetary: 1.08 },
+    photo: { galaxy: 1.15, nebula: 1.18, cluster: 0.96, planetary: 1.02 },
+    travel: { galaxy: 0.95, nebula: 1.02, cluster: 1.12, planetary: 1.0 }
+  };
+  const weights = modeWeights[state.mode];
+
+  return summary.targetSpotlightSource
+    .map((target) => {
+      const family = target.tags.find((tag) => weights[tag]) || "cluster";
+      const weighted = target.score * weights[family];
+      const recommendation = state.mode === "photo"
+        ? (weighted >= 78 ? "Strong framing and capture candidate." : "Better for shorter blocks or test frames.")
+        : state.mode === "travel"
+          ? (weighted >= 72 ? "Worth staying set up for this target." : "Good backup if the main lane softens.")
+          : (weighted >= 74 ? "Rewarding visual target in this sky." : "Good secondary target when transparency shifts.");
+      return {
+        ...target,
+        weighted,
+        recommendation
+      };
+    })
+    .sort((a, b) => b.weighted - a.weighted)
+    .slice(0, 3);
 }
 
 function buildTargetTracks(location, times, utcOffsetSeconds) {
@@ -564,6 +592,31 @@ function deriveSummary(location, forecast) {
     ["Surface flow", `${Math.round(current.wind_speed_10m)} km/h`, `${visibilityNow} km visibility`]
   ];
   const targetTracks = buildTargetTracks(location, nextEight.map((item) => item.time), forecast.utc_offset_seconds || 0);
+  const targetSpotlightSource = targetTracks.map((target) => {
+    const peakIndex = target.points.findIndex((point) => point === target.peak);
+    const peakAltitude = Math.round(target.peak * 90 - 10);
+    const peakTime = peakIndex >= 0 ? formatClock(nextEight[peakIndex].time) : bestPeak;
+    const score = Math.round(
+      clamp(
+        bestScore * 0.55 +
+        peakAltitude * 0.45 +
+        target.visibleHours * 4 -
+        todayMoon.illumination * 0.08,
+        18,
+        96
+      )
+    );
+
+    return {
+      name: target.name,
+      type: target.type,
+      tags: target.tags,
+      peakAltitude,
+      peakTime,
+      visibleHours: target.visibleHours,
+      score
+    };
+  });
   const moonWindow = bestScore >= 72 ? "Best faint-object window" : "Better for brighter targets";
   const moonwatch = {
     title: `${todayMoon.name} · ${todayMoon.illumination}% lit`,
@@ -626,6 +679,7 @@ function deriveSummary(location, forecast) {
     runbookSource,
     alerts,
     alertsNote,
+    targetSpotlightSource,
     mapSpotlight,
     targetTracks,
     targetLabels: nextEight.map((item) => formatClock(item.time)),
@@ -661,6 +715,7 @@ function renderTargets() {
   });
 
   renderRunbook(buildRunbook(state.liveSummary), state.liveSummary.alerts, state.liveSummary.alertsNote);
+  renderSpotlight(buildSpotlight(state.liveSummary));
 }
 
 function renderSummary(location, forecast) {
@@ -1010,6 +1065,37 @@ function renderRunbook(runbook, alerts, alertsNote) {
     .join("");
 
   els.alertsNote.textContent = alertsNote;
+}
+
+function renderSpotlight(spotlight) {
+  if (!spotlight.length) {
+    els.spotlightList.innerHTML = `
+      <div class="spotlight-card">
+        <strong>No standout target yet</strong>
+        <small>Try another location, wait for darkness, or use the runbook to catch a better lane later.</small>
+      </div>
+    `;
+    return;
+  }
+
+  els.spotlightList.innerHTML = spotlight
+    .map(
+      (target, index) => `
+        <div class="spotlight-card">
+          <div class="spotlight-top">
+            <span class="spotlight-rank">#${index + 1}</span>
+            <span class="spotlight-type">${target.type}</span>
+          </div>
+          <strong>${target.name}</strong>
+          <div class="spotlight-meta">
+            <span>Peak altitude ${target.peakAltitude}° near ${target.peakTime}</span>
+            <span>Visible for about ${target.visibleHours}h in the next block</span>
+          </div>
+          <small>${target.recommendation}</small>
+        </div>
+      `
+    )
+    .join("");
 }
 
 function renderTargetChart(tracks, labels) {
