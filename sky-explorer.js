@@ -97,7 +97,7 @@ const state = {
   locationKey: "dartmoor",
   activeLocation: presetLocations.dartmoor,
   hoursOffset: 0,
-  selectedName: "Andromeda Galaxy",
+  selectedName: "",
   showLabels: true,
   showConstellations: true,
   showAtmosphere: true
@@ -107,8 +107,7 @@ const els = {
   location: document.querySelector("#explorer-location"),
   deviceLocationButton: document.querySelector("#device-location-button"),
   locationStatus: document.querySelector("#location-status"),
-  search: document.querySelector("#object-search"),
-  options: document.querySelector("#object-options"),
+  objectSelect: document.querySelector("#object-select"),
   slider: document.querySelector("#time-slider"),
   resetTime: document.querySelector("#reset-time"),
   toggles: document.querySelectorAll("[data-toggle]"),
@@ -294,6 +293,7 @@ function buildTonightSuggestion(location) {
       : "Casual observing window";
 
   return {
+    bestTargetName: bestWindow.best.name,
     cards: [
       ["Tonight suggestion", suggestion, `${bestWindow.best.name} looks strongest for the selected location.`],
       ["Best view time", formatClock(bestWindow.date), `${bestWindow.best.type} peaks near ${Math.round(bestWindow.best.altitude)}° altitude.`],
@@ -301,6 +301,11 @@ function buildTonightSuggestion(location) {
     ],
     note: `${location.name} is most rewarding near ${formatClock(bestWindow.date)} when ${bestWindow.best.name} rises into its best placement.`
   };
+}
+
+function bestTargetForTonight(location) {
+  const tonight = buildTonightSuggestion(location);
+  return objectByName(tonight.bestTargetName || objectCatalog[0].name);
 }
 
 function buildSelectedTimeline(location, object) {
@@ -335,7 +340,7 @@ function drawSky() {
   const location = currentLocation();
   const date = targetDate();
   const ranked = rankObjects(location, date);
-  const selected = objectByName(state.selectedName);
+  const selected = objectByName(state.selectedName || bestTargetForTonight(location).name);
 
   ctx.clearRect(0, 0, width, height);
 
@@ -541,15 +546,15 @@ function renderVisibleList(ranked) {
   els.visibleList.querySelectorAll("[data-object]").forEach((button) => {
     button.addEventListener("click", () => {
       state.selectedName = button.dataset.object;
-      els.search.value = state.selectedName;
+      els.objectSelect.value = state.selectedName;
       drawSky();
     });
   });
 }
 
 function populateOptions() {
-  els.options.innerHTML = objectCatalog
-    .map((object) => `<option value="${object.name}"></option>`)
+  els.objectSelect.innerHTML = objectCatalog
+    .map((object) => `<option value="${object.name}">${object.name} · ${object.type}</option>`)
     .join("");
 }
 
@@ -560,14 +565,16 @@ els.location.addEventListener("change", () => {
   }
   state.locationKey = els.location.value;
   state.activeLocation = next;
+  state.selectedName = bestTargetForTonight(next).name;
+  els.objectSelect.value = state.selectedName;
   els.locationStatus.textContent = `Using ${next.name}.`;
   drawSky();
 });
 
-els.search.addEventListener("change", () => {
-  const match = objectByName(els.search.value.trim());
+els.objectSelect.addEventListener("change", () => {
+  const match = objectByName(els.objectSelect.value);
   state.selectedName = match.name;
-  els.search.value = match.name;
+  els.objectSelect.value = match.name;
   drawSky();
 });
 
@@ -599,7 +606,9 @@ els.deviceLocationButton.addEventListener("click", () => {
         const location = await reverseGeocode(latitude, longitude);
         state.locationKey = "custom";
         state.activeLocation = location;
+        state.selectedName = bestTargetForTonight(location).name;
         els.location.value = "custom";
+        els.objectSelect.value = state.selectedName;
         els.locationStatus.textContent = `Using ${location.name}.`;
       } catch (error) {
         const fallback = {
@@ -609,7 +618,9 @@ els.deviceLocationButton.addEventListener("click", () => {
         };
         state.locationKey = "custom";
         state.activeLocation = fallback;
+        state.selectedName = bestTargetForTonight(fallback).name;
         els.location.value = "custom";
+        els.objectSelect.value = state.selectedName;
         els.locationStatus.textContent = `Using ${fallback.name}.`;
       }
 
@@ -649,6 +660,7 @@ els.toggles.forEach((button) => {
 });
 
 populateOptions();
-els.search.value = state.selectedName;
+state.selectedName = bestTargetForTonight(state.activeLocation).name;
+els.objectSelect.value = state.selectedName;
 els.locationStatus.textContent = `Using ${state.activeLocation.name}.`;
 drawSky();
