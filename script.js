@@ -144,6 +144,7 @@ const els = {
   locationQuery: document.querySelector("#location-query"),
   searchForm: document.querySelector("#search-form"),
   searchStatus: document.querySelector("#search-status"),
+  deviceLocationButton: document.querySelector("#device-location-button"),
   sourceNote: document.querySelector("#source-note"),
   heroEyebrow: document.querySelector("#hero-eyebrow"),
   heroTitle: document.querySelector("#hero-title"),
@@ -570,6 +571,37 @@ async function fetchLocationBySearch(query) {
   };
 }
 
+async function reverseGeocode(latitude, longitude) {
+  const params = new URLSearchParams({
+    latitude: String(latitude),
+    longitude: String(longitude),
+    language: "en",
+    format: "json"
+  });
+  const response = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?${params.toString()}`);
+
+  if (!response.ok) {
+    throw new Error("Reverse geocoding failed.");
+  }
+
+  const payload = await response.json();
+  const match = payload.results?.[0];
+
+  if (!match) {
+    return {
+      name: `Your location (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`,
+      latitude,
+      longitude
+    };
+  }
+
+  return {
+    name: [match.name, match.admin1, match.country].filter(Boolean).join(", "),
+    latitude,
+    longitude
+  };
+}
+
 async function loadLocation(location, statusMessage) {
   els.searchStatus.textContent = statusMessage;
 
@@ -607,6 +639,40 @@ els.searchForm.addEventListener("submit", async (event) => {
   } catch (error) {
     els.searchStatus.textContent = error.message;
   }
+});
+
+els.deviceLocationButton.addEventListener("click", async () => {
+  if (!navigator.geolocation) {
+    els.searchStatus.textContent = "This browser does not support device location.";
+    return;
+  }
+
+  els.searchStatus.textContent = "Requesting your device location...";
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      try {
+        const foundLocation = await reverseGeocode(position.coords.latitude, position.coords.longitude);
+        els.locationSelect.value = "custom";
+        await loadLocation(foundLocation, `Loading ${foundLocation.name}...`);
+      } catch (error) {
+        els.searchStatus.textContent = "Your coordinates were found, but the location name lookup failed.";
+      }
+    },
+    (error) => {
+      if (error.code === error.PERMISSION_DENIED) {
+        els.searchStatus.textContent = "Location access was denied. Please allow location access in your browser.";
+        return;
+      }
+
+      els.searchStatus.textContent = "Your device location could not be read right now.";
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 300000
+    }
+  );
 });
 
 els.modeButtons.forEach((button) => {
