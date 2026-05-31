@@ -97,6 +97,12 @@ a {
   min-width: 220px;
 }
 
+.controls {
+  display: grid;
+  gap: 14px;
+  min-width: min(100%, 420px);
+}
+
 .location-picker span {
   color: var(--muted);
   font-size: 0.8rem;
@@ -112,6 +118,50 @@ a {
   color: var(--text);
   background: rgba(255, 255, 255, 0.05);
   outline: none;
+}
+
+.search-form {
+  display: grid;
+  gap: 8px;
+}
+
+.search-label,
+.source-note {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.search-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+.search-row input {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 13px 16px;
+  font: inherit;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  outline: none;
+}
+
+.search-button {
+  min-width: 88px;
+  padding: 13px 18px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  font: inherit;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+.search-status {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.9rem;
 }
 
 .eyebrow {
@@ -550,6 +600,10 @@ a {
     width: 100%;
   }
 
+  .controls {
+    width: 100%;
+  }
+
   .hero,
   .panel {
     padding: 18px;
@@ -572,5 +626,9 @@ a {
 
   .chart-bars {
     gap: 8px;
+  }
+
+  .search-row {
+    grid-template-columns: 1fr;
   }
 }

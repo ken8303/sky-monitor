@@ -1,136 +1,45 @@
-const locations = {
-  dartmoor: {
-    name: "Dartmoor, UK",
-    summary: "Clearest viewing window starts at 22:40 and peaks near midnight.",
-    intro:
-      "A calm, data-rich dashboard for planning astronomy sessions, stargazing trips, and astrophotography windows.",
-    stats: [
-      { label: "Cloud Cover", value: "14%", note: "Low after 21:00" },
-      { label: "Seeing", value: "7.8 / 10", note: "Stable atmosphere" },
-      { label: "Moon Phase", value: "18%", note: "Waning crescent" }
-    ],
-    badge: "Excellent",
-    note: "Transparency improves quickly after dusk, with the cleanest sky between 23:30 and 01:10.",
-    timeline: [
-      { time: "20:00", label: "Fair", level: "q2" },
-      { time: "22:00", label: "Great", level: "q4" },
-      { time: "00:00", label: "Peak", level: "q5" },
-      { time: "02:00", label: "Great", level: "q4" },
-      { time: "04:00", label: "Good", level: "q3" }
-    ],
-    forecast: [
-      ["Sun", "81%", "Best"],
-      ["Mon", "52%", "Mixed"],
-      ["Tue", "68%", "Good"],
-      ["Wed", "39%", "Cloudy"],
-      ["Thu", "74%", "Sharp"]
-    ],
-    transparency: { score: 86, title: "Excellent contrast", body: "Dry upper air and low haze make faint objects easier to pick out." },
-    dew: { score: 62, title: "Moderate risk later", body: "Lens heaters recommended after 01:00 as surface cooling picks up." },
-    darkness: { title: "Dark window starts 22:18", body: "Moonset before midnight keeps the second half of the night much darker." },
-    targets: [
-      ["Andromeda Galaxy", "Best from 22:50 to 01:20"],
-      ["Lagoon Nebula", "Low western haze, capture early"],
-      ["Saturn", "Stable seeing supports high magnification"]
-    ],
-    quicklook: [
-      ["Humidity", "63%", "Comfortable"],
-      ["Wind", "7 km/h", "Tripod-friendly"],
-      ["Bortle", "4", "Rural sky"]
-    ],
-    chart: [48, 56, 70, 82, 93, 90, 78, 66]
-  },
-  sedona: {
-    name: "Sedona, Arizona",
-    summary: "Deep-sky conditions stay strong for most of the night with very dry air.",
-    intro:
-      "A high-desert session profile with stronger transparency, darker skies, and better all-night consistency.",
-    stats: [
-      { label: "Cloud Cover", value: "8%", note: "Nearly clear all night" },
-      { label: "Seeing", value: "8.4 / 10", note: "Smooth upper atmosphere" },
-      { label: "Moon Phase", value: "18%", note: "Moon low in west" }
-    ],
-    badge: "Prime",
-    note: "The best stretch runs from 21:50 to 02:40, with both seeing and transparency holding steady.",
-    timeline: [
-      { time: "20:00", label: "Good", level: "q3" },
-      { time: "22:00", label: "Great", level: "q4" },
-      { time: "00:00", label: "Peak", level: "q5" },
-      { time: "02:00", label: "Peak", level: "q5" },
-      { time: "04:00", label: "Great", level: "q4" }
-    ],
-    forecast: [
-      ["Sun", "88%", "Prime"],
-      ["Mon", "83%", "Prime"],
-      ["Tue", "76%", "Strong"],
-      ["Wed", "61%", "Mixed"],
-      ["Thu", "85%", "Prime"]
-    ],
-    transparency: { score: 93, title: "Very dark and dry", body: "Low moisture and altitude combine for excellent contrast and fainter-object visibility." },
-    dew: { score: 22, title: "Very low dew risk", body: "Dry desert air keeps optics clear, even during the coldest pre-dawn period." },
-    darkness: { title: "Astronomical dark from 21:04", body: "A long dark run leaves plenty of room for imaging and target hopping." },
-    targets: [
-      ["Veil Nebula", "Wide-field imaging window is excellent"],
-      ["M31 Core Detail", "Dry air supports cleaner contrast"],
-      ["Saturn", "Late-night seeing stays sharp"]
-    ],
-    quicklook: [
-      ["Humidity", "28%", "Very dry"],
-      ["Wind", "5 km/h", "Steady setup"],
-      ["Bortle", "3", "Dark sky"]
-    ],
-    chart: [62, 74, 86, 92, 95, 94, 88, 80]
-  },
-  lofoten: {
-    name: "Lofoten, Norway",
-    summary: "Cloud breaks create a shorter, more tactical observing window with aurora potential.",
-    intro:
-      "A northern-session profile that balances sky quality, weather gaps, and the possibility of dramatic auroral activity.",
-    stats: [
-      { label: "Cloud Cover", value: "36%", note: "Variable gaps after 23:00" },
-      { label: "Seeing", value: "6.5 / 10", note: "Changeable marine air" },
-      { label: "Aurora", value: "Kp 4", note: "Moderate activity chance" }
-    ],
-    badge: "Watch Closely",
-    note: "The clearest opportunity is compact, roughly 23:10 to 00:50, but aurora activity may reward patience.",
-    timeline: [
-      { time: "20:00", label: "Poor", level: "q2" },
-      { time: "22:00", label: "Fair", level: "q2" },
-      { time: "00:00", label: "Great", level: "q4" },
-      { time: "02:00", label: "Good", level: "q3" },
-      { time: "04:00", label: "Fair", level: "q2" }
-    ],
-    forecast: [
-      ["Sun", "44%", "Mixed"],
-      ["Mon", "57%", "Better"],
-      ["Tue", "63%", "Good"],
-      ["Wed", "41%", "Cloudy"],
-      ["Thu", "59%", "Watch"]
-    ],
-    transparency: { score: 67, title: "Clear spells likely", body: "Transparency improves sharply during gaps, but conditions may swing hour by hour." },
-    dew: { score: 48, title: "Manageable moisture", body: "Cold, damp air means heaters help, though the risk is not extreme." },
-    darkness: { title: "Aurora watch peaks 23:40", body: "If clouds open on schedule, the northern horizon could become the main event." },
-    targets: [
-      ["Aurora Patrol", "Stay mobile and frame the northern horizon"],
-      ["Pleiades", "Best during the clearest mid-window gap"],
-      ["Wide-field Milky Way", "Use fast lenses between cloud bands"]
-    ],
-    quicklook: [
-      ["Humidity", "79%", "Layer up"],
-      ["Wind", "14 km/h", "Shelter advised"],
-      ["Bortle", "3", "Very dark"]
-    ],
-    chart: [30, 36, 40, 58, 74, 71, 55, 42]
-  }
+const presetLocations = {
+  dartmoor: { name: "Dartmoor, UK", latitude: 50.57, longitude: -3.92 },
+  sedona: { name: "Sedona, Arizona", latitude: 34.8697, longitude: -111.761 },
+  lofoten: { name: "Lofoten, Norway", latitude: 68.154, longitude: 13.611 }
+};
+
+const weatherLabels = {
+  0: "Clear sky",
+  1: "Mostly clear",
+  2: "Partly cloudy",
+  3: "Overcast",
+  45: "Fog",
+  48: "Rime fog",
+  51: "Light drizzle",
+  53: "Drizzle",
+  55: "Dense drizzle",
+  61: "Light rain",
+  63: "Rain",
+  65: "Heavy rain",
+  71: "Light snow",
+  73: "Snow",
+  75: "Heavy snow",
+  80: "Rain showers",
+  81: "Heavy showers",
+  82: "Violent showers",
+  95: "Thunderstorm"
 };
 
 const state = {
-  location: "dartmoor",
-  mode: "visual"
+  locationKey: "dartmoor",
+  mode: "visual",
+  activeLocation: presetLocations.dartmoor,
+  activeData: null,
+  liveSummary: null
 };
 
 const els = {
   locationSelect: document.querySelector("#location-select"),
+  locationQuery: document.querySelector("#location-query"),
+  searchForm: document.querySelector("#search-form"),
+  searchStatus: document.querySelector("#search-status"),
+  sourceNote: document.querySelector("#source-note"),
   heroEyebrow: document.querySelector("#hero-eyebrow"),
   heroTitle: document.querySelector("#hero-title"),
   heroText: document.querySelector("#hero-text"),
@@ -156,6 +65,125 @@ const els = {
   locationButton: document.querySelector("#location-button")
 };
 
+function toTitle(value) {
+  return value.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function formatClock(isoString) {
+  return isoString.slice(11, 16);
+}
+
+function weatherLabel(code) {
+  return weatherLabels[code] || "Changeable";
+}
+
+function moonPhaseForDate(dateString) {
+  const epoch = Date.UTC(2000, 0, 6, 18, 14);
+  const current = Date.parse(`${dateString.slice(0, 10)}T12:00:00Z`);
+  const synodicMonth = 29.53058867 * 24 * 60 * 60 * 1000;
+  const phase = ((current - epoch) % synodicMonth + synodicMonth) % synodicMonth / synodicMonth;
+  const illumination = Math.round(((1 - Math.cos(phase * Math.PI * 2)) / 2) * 100);
+
+  let name = "New moon";
+  if (phase > 0.03 && phase < 0.22) {
+    name = "Waxing crescent";
+  } else if (phase >= 0.22 && phase < 0.28) {
+    name = "First quarter";
+  } else if (phase >= 0.28 && phase < 0.47) {
+    name = "Waxing gibbous";
+  } else if (phase >= 0.47 && phase < 0.53) {
+    name = "Full moon";
+  } else if (phase >= 0.53 && phase < 0.72) {
+    name = "Waning gibbous";
+  } else if (phase >= 0.72 && phase < 0.78) {
+    name = "Last quarter";
+  } else if (phase >= 0.78 && phase <= 0.97) {
+    name = "Waning crescent";
+  }
+
+  return { illumination, name };
+}
+
+function isNightAt(timeString, daily) {
+  const dayKey = timeString.slice(0, 10);
+  const dayIndex = daily.time.findIndex((entry) => entry === dayKey);
+
+  if (dayIndex === -1) {
+    return false;
+  }
+
+  return timeString < daily.sunrise[dayIndex] || timeString > daily.sunset[dayIndex];
+}
+
+function scoreHour(sample) {
+  const cloudPenalty = sample.cloud_cover * 0.62;
+  const humidityPenalty = sample.relative_humidity_2m * 0.16;
+  const windPenalty = sample.wind_speed_10m * 1.35;
+  const visibilityBonus = clamp((sample.visibility || 10000) / 1000, 0, 18);
+  const precipitationPenalty = sample.weather_code >= 51 ? 14 : 0;
+  const nightBonus = sample.isNight ? 12 : -10;
+
+  return Math.round(
+    clamp(100 - cloudPenalty - humidityPenalty - windPenalty - precipitationPenalty + visibilityBonus + nightBonus, 8, 98)
+  );
+}
+
+function qualityBadge(score) {
+  if (score >= 82) {
+    return "Prime";
+  }
+  if (score >= 68) {
+    return "Excellent";
+  }
+  if (score >= 54) {
+    return "Good";
+  }
+  if (score >= 40) {
+    return "Watch";
+  }
+  return "Limited";
+}
+
+function buildTargets(summary) {
+  const moonText = `${summary.moon.name.toLowerCase()} at ${summary.moon.illumination}% illumination`;
+
+  const map = {
+    visual: summary.bestScore >= 70
+      ? [
+          ["Galaxies & nebulae", `Best during the ${summary.bestStart} to ${summary.bestPeak} window`],
+          ["Saturn or Jupiter", `Stable conditions make bright planets rewarding tonight`],
+          ["Open clusters", `Great fallback if transparency shifts later in the session`]
+        ]
+      : [
+          ["Bright clusters", `Safer pick while conditions stay ${qualityBadge(summary.bestScore).toLowerCase()}`],
+          ["Planets", `Use brighter targets when cloud and humidity stay variable`],
+          ["Moon-aware observing", moonText]
+        ],
+    photo: summary.bestScore >= 70
+      ? [
+          ["Wide-field Milky Way", `Plan imaging around ${summary.bestPeak} when the score peaks`],
+          ["Deep-sky imaging", `Cloud cover and wind are most favorable near the best window`],
+          ["Planetary capture", `Current weather reads as ${summary.weatherSummary.toLowerCase()}`]
+        ]
+      : [
+          ["Short exposures", `Use shorter runs while conditions remain more tactical`],
+          ["Foreground night scenes", `Leaner setup suits a mixed forecast`],
+          ["Bright-object capture", moonText]
+        ],
+    travel: [
+      ["Pack for wind and moisture", `${summary.windText} wind and ${summary.humidityText} humidity right now`],
+      ["Aim for the best window", `Most promising stretch starts around ${summary.bestStart}`],
+      ["Check the sky before setup", `${summary.weatherSummary} is the live current condition`]
+    ]
+  };
+
+  return map[state.mode];
+}
+
 function makeStat(stat) {
   return `
     <div class="stat">
@@ -166,76 +194,94 @@ function makeStat(stat) {
   `;
 }
 
-function renderLocation() {
-  const data = locations[state.location];
+function deriveSummary(location, forecast) {
+  const current = forecast.current;
+  const hourly = forecast.hourly;
+  const daily = forecast.daily;
+  const todayMoon = moonPhaseForDate(hourly.time[0]);
+  const nextEight = hourly.time.slice(0, 8).map((time, index) => ({
+    time,
+    cloud_cover: hourly.cloud_cover[index],
+    relative_humidity_2m: hourly.relative_humidity_2m[index],
+    wind_speed_10m: hourly.wind_speed_10m[index],
+    visibility: hourly.visibility[index],
+    weather_code: hourly.weather_code[index],
+    isNight: isNightAt(time, daily)
+  }));
+  const scored = nextEight.map((item) => ({ ...item, score: scoreHour(item) }));
+  const timeline = scored.filter((_, index) => index < 5);
+  const nightCandidates = scored.filter((item) => item.isNight);
+  const best = nightCandidates.reduce(
+    (winner, item) => (item.score > winner.score ? item : winner),
+    nightCandidates[0] || scored[0]
+  );
 
-  els.heroEyebrow.textContent = `Tonight at ${data.name}`;
-  els.heroTitle.textContent = data.summary;
-  els.heroText.textContent = data.intro;
-  els.heroStats.innerHTML = data.stats.map(makeStat).join("");
-  els.qualityBadge.textContent = data.badge;
-  els.qualityNote.textContent = data.note;
+  const dewGap = Math.max(0, current.temperature_2m - hourly.dew_point_2m[0]);
+  const dewScore = Math.round(clamp(dewGap * 11, 10, 96));
+  const transparencyScore = Math.round(
+    clamp(100 - current.cloud_cover * 0.7 + Math.min((hourly.visibility[0] || 10000) / 1000, 18), 18, 98)
+  );
+  const avgCloud = daily.cloud_cover_mean || [];
+  const overview = `Live forecast for ${location.name} with ${weatherLabel(current.weather_code).toLowerCase()} conditions and a ${todayMoon.name.toLowerCase()}.`;
+  const bestStart = formatClock(best.time);
+  const bestPeak = formatClock(best.time);
+  const bestScore = best.score;
+  const currentLabel = weatherLabel(current.weather_code);
 
-  els.timelineLabels.innerHTML = data.timeline.map((item) => `<span>${item.time}</span>`).join("");
-  els.timelineBars.innerHTML = data.timeline
-    .map((item) => `<span class="${item.level}">${item.label}</span>`)
-    .join("");
-
-  els.forecastList.innerHTML = data.forecast
-    .map(
-      ([day, score, note]) =>
-        `<li><span>${day}</span><strong>${score}</strong><small>${note}</small></li>`
-    )
-    .join("");
-
-  els.transparencyScore.textContent = data.transparency.score;
-  els.transparencyScore.parentElement.style.setProperty("--value", data.transparency.score);
-  els.transparencyTitle.textContent = data.transparency.title;
-  els.transparencyBody.textContent = data.transparency.body;
-
-  els.dewScore.textContent = data.dew.score;
-  els.dewScore.parentElement.style.setProperty("--value", data.dew.score);
-  els.dewTitle.textContent = data.dew.title;
-  els.dewBody.textContent = data.dew.body;
-
-  els.darkTitle.textContent = data.darkness.title;
-  els.darkBody.textContent = data.darkness.body;
-
-  els.quicklook.innerHTML = data.quicklook
-    .map(
-      ([label, value, note]) => `
-        <div class="quick-item">
-          <span>${label}</span>
-          <strong>${value}</strong>
-          <small>${note}</small>
-        </div>
-      `
-    )
-    .join("");
-
-  els.chartBars.innerHTML = data.chart
-    .map(
-      (value, index) => `
-        <div class="chart-col">
-          <span class="chart-value" style="height:${value}%"></span>
-          <small>${20 + index}:00</small>
-        </div>
-      `
-    )
-    .join("");
-
-  renderTargets();
+  return {
+    heroTitle: `Best viewing window starts around ${bestStart} and peaks near ${bestPeak}.`,
+    heroText: overview,
+    stats: [
+      { label: "Cloud Cover", value: `${current.cloud_cover}%`, note: currentLabel },
+      { label: "Humidity", value: `${current.relative_humidity_2m}%`, note: `${Math.round(current.temperature_2m)}°C currently` },
+      { label: "Moon Phase", value: `${todayMoon.illumination}%`, note: todayMoon.name }
+    ],
+    badge: qualityBadge(bestScore),
+    note: `${currentLabel} right now, with the strongest near-term score at ${bestPeak}. Wind is ${Math.round(current.wind_speed_10m)} km/h and humidity is ${current.relative_humidity_2m}%.`,
+    timeline: timeline.map((item) => ({
+      time: formatClock(item.time),
+      label: qualityBadge(item.score),
+      level: item.score >= 82 ? "q5" : item.score >= 68 ? "q4" : item.score >= 52 ? "q3" : "q2"
+    })),
+    forecast: daily.time.slice(0, 5).map((day, index) => {
+      const label = new Date(`${day}T12:00:00`).toLocaleDateString("en-GB", { weekday: "short" });
+      const score = String(Math.round(clamp(100 - avgCloud[index] * 0.72 - (daily.precipitation_probability_max[index] || 0) * 0.25, 18, 96))) + "%";
+      return [label, score, weatherLabel(daily.weather_code[index])];
+    }),
+    transparency: {
+      score: transparencyScore,
+      title: transparencyScore >= 70 ? "Promising clarity" : "Mixed transparency",
+      body: `Cloud cover is ${current.cloud_cover}% with visibility near ${Math.round((hourly.visibility[0] || 0) / 1000)} km in the latest hourly forecast.`
+    },
+    dew: {
+      score: dewScore,
+      title: dewScore >= 70 ? "Low dew risk" : "Dew may build later",
+      body: `The current temperature-dew point spread is about ${dewGap.toFixed(1)}°C, which is a simple proxy for condensation risk.`
+    },
+    darkness: {
+      title: `${todayMoon.name} at ${todayMoon.illumination}% illumination`,
+      body: `Sunset is ${formatClock(daily.sunset[0])} and sunrise is ${formatClock(daily.sunrise[1] || daily.sunrise[0])} in ${forecast.timezone}.`
+    },
+    quicklook: [
+      ["Timezone", forecast.timezone, "Location-local forecast"],
+      ["Wind", `${Math.round(current.wind_speed_10m)} km/h`, "Live current wind"],
+      ["Range", `${Math.round(daily.temperature_2m_min[0])}° to ${Math.round(daily.temperature_2m_max[0])}°`, "Today's span"]
+    ],
+    chart: scored.map((item) => item.score),
+    moon: todayMoon,
+    bestStart,
+    bestPeak,
+    bestScore,
+    weatherSummary: currentLabel,
+    windText: `${Math.round(current.wind_speed_10m)} km/h`,
+    humidityText: `${current.relative_humidity_2m}%`
+  };
 }
 
 function renderTargets() {
-  const data = locations[state.location];
-  const targetSets = {
-    visual: data.targets,
-    photo: data.targets.map(([title, detail]) => [title, `Photo mode: ${detail}`]),
-    travel: data.targets.map(([title, detail]) => [title, `Travel setup: ${detail}`])
-  };
+  const targets = buildTargets(state.liveSummary);
 
-  els.targetList.innerHTML = targetSets[state.mode]
+  els.targetList.innerHTML = targets
     .map(
       ([title, detail]) => `
         <li>
@@ -251,15 +297,185 @@ function renderTargets() {
   });
 }
 
-els.locationSelect.addEventListener("change", (event) => {
-  state.location = event.target.value;
-  renderLocation();
+function renderSummary(location, forecast) {
+  const summary = deriveSummary(location, forecast);
+  state.activeData = forecast;
+  state.liveSummary = summary;
+
+  els.heroEyebrow.textContent = `Live at ${location.name}`;
+  els.heroTitle.textContent = summary.heroTitle;
+  els.heroText.textContent = summary.heroText;
+  els.heroStats.innerHTML = summary.stats.map(makeStat).join("");
+  els.qualityBadge.textContent = summary.badge;
+  els.qualityNote.textContent = summary.note;
+  els.sourceNote.textContent = `Forecast timezone: ${forecast.timezone}. Live weather from Open-Meteo, moon phase estimated in-browser.`;
+
+  els.timelineLabels.innerHTML = summary.timeline.map((item) => `<span>${item.time}</span>`).join("");
+  els.timelineBars.innerHTML = summary.timeline
+    .map((item) => `<span class="${item.level}">${item.label}</span>`)
+    .join("");
+
+  els.forecastList.innerHTML = summary.forecast
+    .map(
+      ([day, score, note]) =>
+        `<li><span>${day}</span><strong>${score}</strong><small>${note}</small></li>`
+    )
+    .join("");
+
+  els.transparencyScore.textContent = summary.transparency.score;
+  els.transparencyScore.parentElement.style.setProperty("--value", summary.transparency.score);
+  els.transparencyTitle.textContent = summary.transparency.title;
+  els.transparencyBody.textContent = summary.transparency.body;
+
+  els.dewScore.textContent = summary.dew.score;
+  els.dewScore.parentElement.style.setProperty("--value", summary.dew.score);
+  els.dewTitle.textContent = summary.dew.title;
+  els.dewBody.textContent = summary.dew.body;
+
+  els.darkTitle.textContent = summary.darkness.title;
+  els.darkBody.textContent = summary.darkness.body;
+
+  els.quicklook.innerHTML = summary.quicklook
+    .map(
+      ([label, value, note]) => `
+        <div class="quick-item">
+          <span>${label}</span>
+          <strong>${value}</strong>
+          <small>${note}</small>
+        </div>
+      `
+    )
+    .join("");
+
+  els.chartBars.innerHTML = summary.chart
+    .map(
+      (value, index) => `
+        <div class="chart-col">
+          <span class="chart-value" style="height:${value}%"></span>
+          <small>+${index}h</small>
+        </div>
+      `
+    )
+    .join("");
+
+  renderTargets();
+}
+
+async function fetchForecast(location) {
+  const params = new URLSearchParams({
+    latitude: String(location.latitude),
+    longitude: String(location.longitude),
+    current: [
+      "temperature_2m",
+      "relative_humidity_2m",
+      "cloud_cover",
+      "wind_speed_10m",
+      "weather_code"
+    ].join(","),
+    hourly: [
+      "temperature_2m",
+      "relative_humidity_2m",
+      "dew_point_2m",
+      "cloud_cover",
+      "wind_speed_10m",
+      "visibility",
+      "weather_code"
+    ].join(","),
+    daily: [
+      "weather_code",
+      "temperature_2m_max",
+      "temperature_2m_min",
+      "sunrise",
+      "sunset",
+      "daylight_duration",
+      "cloud_cover_mean",
+      "precipitation_probability_max"
+    ].join(","),
+    timezone: "auto",
+    forecast_days: "7"
+  });
+
+  const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
+
+  if (!response.ok) {
+    throw new Error("Forecast request failed.");
+  }
+
+  return response.json();
+}
+
+async function fetchLocationBySearch(query) {
+  const params = new URLSearchParams({
+    name: query,
+    count: "1",
+    language: "en",
+    format: "json"
+  });
+  const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?${params.toString()}`);
+
+  if (!response.ok) {
+    throw new Error("Location search failed.");
+  }
+
+  const payload = await response.json();
+  const match = payload.results?.[0];
+
+  if (!match) {
+    throw new Error("No matching location found.");
+  }
+
+  return {
+    name: [match.name, match.admin1, match.country].filter(Boolean).join(", "),
+    latitude: match.latitude,
+    longitude: match.longitude
+  };
+}
+
+async function loadLocation(location, statusMessage) {
+  els.searchStatus.textContent = statusMessage;
+
+  try {
+    const forecast = await fetchForecast(location);
+    state.activeLocation = location;
+    renderSummary(location, forecast);
+    els.searchStatus.textContent = `Loaded live forecast for ${location.name}.`;
+  } catch (error) {
+    els.searchStatus.textContent = "Live weather could not be loaded right now. Please try again.";
+  }
+}
+
+els.locationSelect.addEventListener("change", async (event) => {
+  const location = presetLocations[event.target.value];
+  state.locationKey = event.target.value;
+  await loadLocation(location, `Loading ${location.name}...`);
+});
+
+els.searchForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const query = els.locationQuery.value.trim();
+
+  if (query.length < 2) {
+    els.searchStatus.textContent = "Enter at least two characters to search for a place.";
+    return;
+  }
+
+  els.searchStatus.textContent = `Searching for ${query}...`;
+
+  try {
+    const foundLocation = await fetchLocationBySearch(query);
+    els.locationSelect.value = "custom";
+    await loadLocation(foundLocation, `Loading ${foundLocation.name}...`);
+  } catch (error) {
+    els.searchStatus.textContent = error.message;
+  }
 });
 
 els.modeButtons.forEach((button) => {
   button.addEventListener("click", () => {
     state.mode = button.dataset.mode;
-    renderTargets();
+    if (state.liveSummary) {
+      renderTargets();
+    }
   });
 });
 
@@ -268,7 +484,7 @@ els.planButton.addEventListener("click", () => {
 });
 
 els.locationButton.addEventListener("click", () => {
-  els.locationSelect.focus();
+  els.locationQuery.focus();
 });
 
-renderLocation();
+loadLocation(state.activeLocation, `Loading ${state.activeLocation.name}...`);

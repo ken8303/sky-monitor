@@ -21,14 +21,31 @@
           <p class="eyebrow">Night Planning Dashboard</p>
           <h1>Sky Monitor</h1>
         </div>
-        <label class="location-picker">
-          <span>Location</span>
-          <select id="location-select" aria-label="Choose location">
-            <option value="dartmoor">Dartmoor, UK</option>
-            <option value="sedona">Sedona, Arizona</option>
-            <option value="lofoten">Lofoten, Norway</option>
-          </select>
-        </label>
+        <div class="controls">
+          <label class="location-picker">
+            <span>Quick Locations</span>
+            <select id="location-select" aria-label="Choose location">
+              <option value="dartmoor">Dartmoor, UK</option>
+              <option value="sedona">Sedona, Arizona</option>
+              <option value="lofoten">Lofoten, Norway</option>
+              <option value="custom">Custom search result</option>
+            </select>
+          </label>
+          <form class="search-form" id="search-form">
+            <label for="location-query" class="search-label">Search any place</label>
+            <div class="search-row">
+              <input
+                id="location-query"
+                name="location-query"
+                type="text"
+                placeholder="Search city or region"
+                autocomplete="off"
+              />
+              <button type="submit" class="secondary search-button">Find</button>
+            </div>
+            <p class="search-status" id="search-status">Live forecast data powered by Open-Meteo.</p>
+          </form>
+        </div>
         <nav class="topnav" aria-label="Primary">
           <a href="#overview">Overview</a>
           <a href="#forecast">Forecast</a>
@@ -47,6 +64,7 @@
               <button type="button" class="primary" id="plan-button">Open Planner</button>
               <button type="button" class="secondary" id="location-button">Change Location</button>
             </div>
+            <p class="source-note" id="source-note">Using live forecast data and a local moon-phase estimate.</p>
           </div>
           <div class="hero-stats" id="hero-stats"></div>
         </section>
