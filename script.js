@@ -726,13 +726,20 @@ function coordinatesLabel(latitude, longitude) {
 }
 
 function mapEmbedUrl(latitude, longitude) {
-  const latOffset = 0.25;
-  const lonOffset = 0.45;
-  const left = longitude - lonOffset;
-  const right = longitude + lonOffset;
-  const top = latitude + latOffset;
-  const bottom = latitude - latOffset;
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${latitude}%2C${longitude}`;
+  const params = new URLSearchParams({
+    type: "map",
+    location: "coordinates",
+    metricRain: "default",
+    metricTemp: "default",
+    metricWind: "default",
+    zoom: "5",
+    overlay: "clouds",
+    product: "ecmwf",
+    level: "surface",
+    lat: latitude.toFixed(3),
+    lon: longitude.toFixed(3)
+  });
+  return `https://embed.windy.com/embed.html?${params.toString()}`;
 }
 
 function toPolyline(points, width, height, padding) {
@@ -791,8 +798,8 @@ function renderMap(location, summary) {
       <small>${coordinatesLabel(location.latitude, location.longitude)}</small>
     </div>
     <div>
-      <span>Night window</span>
-      <strong>${summary.darkStart && summary.darkEnd ? `${summary.darkStart} - ${summary.darkEnd}` : "Late twilight"}</strong>
+      <span>Windy layer</span>
+      <strong>Clouds · ECMWF · Zoom 5</strong>
       <small>${summary.weatherSummary}</small>
     </div>
   `;
