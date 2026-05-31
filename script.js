@@ -40,6 +40,12 @@ const targetCatalog = [
 ];
 
 const targetColors = ["#ff8e72", "#b4ff8a", "#7fd2ff"];
+const mapOverlayConfig = {
+  clouds: { label: "Clouds", overlay: "clouds", product: "ecmwf", zoom: "5" },
+  wind: { label: "Wind", overlay: "wind", product: "ecmwf", zoom: "5" },
+  rain: { label: "Rain", overlay: "rain", product: "ecmwf", zoom: "5" },
+  pressure: { label: "Pressure", overlay: "pressure", product: "ecmwf", zoom: "5" }
+};
 
 const astro = (() => {
   const PI = Math.PI;
@@ -168,6 +174,7 @@ const astro = (() => {
 const state = {
   locationKey: "dartmoor",
   mode: "visual",
+  mapOverlay: "clouds",
   activeLocation: presetLocations.dartmoor,
   activeData: null,
   liveSummary: null
@@ -204,7 +211,9 @@ const els = {
   trendChart: document.querySelector("#trend-chart"),
   trendAxis: document.querySelector("#trend-axis"),
   mapFrame: document.querySelector("#location-map"),
+  mapSpotlight: document.querySelector("#map-spotlight"),
   mapMeta: document.querySelector("#map-meta"),
+  mapOverlayButtons: document.querySelectorAll("[data-map-overlay]"),
   targetLegend: document.querySelector("#target-legend"),
   targetChart: document.querySelector("#target-chart"),
   targetAxis: document.querySelector("#target-axis"),
@@ -457,6 +466,11 @@ function deriveSummary(location, forecast) {
     wind: nextEight.map((item) => clamp(item.wind_speed_10m / 30, 0, 1)),
     visibility: nextEight.map((item) => clamp((item.visibility || 0) / 30000, 0, 1))
   };
+  const mapSpotlight = [
+    ["Current sky", currentLabel, `${current.cloud_cover}% cloud cover now`],
+    ["Peak hour", bestPeak, `${qualityBadge(bestScore)} viewing window`],
+    ["Surface flow", `${Math.round(current.wind_speed_10m)} km/h`, `${visibilityNow} km visibility`]
+  ];
   const targetTracks = buildTargetTracks(location, nextEight.map((item) => item.time), forecast.utc_offset_seconds || 0);
   const moonWindow = bestScore >= 72 ? "Best faint-object window" : "Better for brighter targets";
   const moonwatch = {
@@ -514,6 +528,7 @@ function deriveSummary(location, forecast) {
     chart: scored.map((item) => item.score),
     statusItems,
     trendSeries,
+    mapSpotlight,
     targetTracks,
     targetLabels: nextEight.map((item) => formatClock(item.time)),
     moonwatch,
@@ -726,15 +741,16 @@ function coordinatesLabel(latitude, longitude) {
 }
 
 function mapEmbedUrl(latitude, longitude) {
+  const selected = mapOverlayConfig[state.mapOverlay] || mapOverlayConfig.clouds;
   const params = new URLSearchParams({
     type: "map",
     location: "coordinates",
     metricRain: "default",
     metricTemp: "default",
     metricWind: "default",
-    zoom: "5",
-    overlay: "clouds",
-    product: "ecmwf",
+    zoom: selected.zoom,
+    overlay: selected.overlay,
+    product: selected.product,
     level: "surface",
     lat: latitude.toFixed(3),
     lon: longitude.toFixed(3)
@@ -790,7 +806,22 @@ function renderStatusStrip(items) {
 }
 
 function renderMap(location, summary) {
+  const selected = mapOverlayConfig[state.mapOverlay] || mapOverlayConfig.clouds;
   els.mapFrame.src = mapEmbedUrl(location.latitude, location.longitude);
+  els.mapOverlayButtons.forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.mapOverlay === state.mapOverlay);
+  });
+  els.mapSpotlight.innerHTML = summary.mapSpotlight
+    .map(
+      ([label, value, note]) => `
+        <div class="map-spotlight-card">
+          <span>${label}</span>
+          <strong>${value}</strong>
+          <small>${note}</small>
+        </div>
+      `
+    )
+    .join("");
   els.mapMeta.innerHTML = `
     <div>
       <span>Area</span>
@@ -799,7 +830,7 @@ function renderMap(location, summary) {
     </div>
     <div>
       <span>Windy layer</span>
-      <strong>Clouds · ECMWF · Zoom 5</strong>
+      <strong>${selected.label} · ${selected.product.toUpperCase()} · Zoom ${selected.zoom}</strong>
       <small>${summary.weatherSummary}</small>
     </div>
   `;
@@ -963,6 +994,15 @@ els.modeButtons.forEach((button) => {
     state.mode = button.dataset.mode;
     if (state.liveSummary) {
       renderTargets();
+    }
+  });
+});
+
+els.mapOverlayButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    state.mapOverlay = button.dataset.mapOverlay;
+    if (state.liveSummary && state.activeLocation) {
+      renderMap(state.activeLocation, state.liveSummary);
     }
   });
 });

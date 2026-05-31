@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260531e" />
+    <link rel="stylesheet" href="styles.css?v=20260531f" />
   </head>
   <body>
     <div class="page-shell">
@@ -165,6 +165,14 @@
                 <h3>Current observing area</h3>
               </div>
             </div>
+            <div class="map-toolbar">
+              <div class="segmented-control map-control" aria-label="Map layer">
+                <button type="button" data-map-overlay="clouds" class="is-active">Clouds</button>
+                <button type="button" data-map-overlay="wind">Wind</button>
+                <button type="button" data-map-overlay="rain">Rain</button>
+                <button type="button" data-map-overlay="pressure">Pressure</button>
+              </div>
+            </div>
             <div class="map-frame-wrap">
               <iframe
                 id="location-map"
@@ -173,6 +181,7 @@
                 referrerpolicy="no-referrer-when-downgrade"
               ></iframe>
             </div>
+            <div class="map-spotlight" id="map-spotlight"></div>
             <div class="map-meta" id="map-meta"></div>
           </article>
         </section>
@@ -269,6 +278,6 @@
       </main>
     </div>
 
-    <script src="script.js?v=20260531e"></script>
+    <script src="script.js?v=20260531f"></script>
   </body>
 </html>

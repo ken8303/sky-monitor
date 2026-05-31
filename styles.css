@@ -436,6 +436,40 @@ a {
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.map-toolbar {
+  margin-top: 18px;
+}
+
+.map-control {
+  flex-wrap: wrap;
+}
+
+.map-spotlight {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.map-spotlight-card {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.map-spotlight-card span,
+.map-spotlight-card small {
+  color: var(--muted);
+}
+
+.map-spotlight-card strong {
+  display: block;
+  margin: 8px 0 4px;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.15rem;
+}
+
 .map-frame-wrap iframe {
   width: 100%;
   min-height: 320px;
@@ -816,6 +850,7 @@ a {
   .metric,
   .quick-item,
   .map-meta,
+  .map-spotlight,
   .moonwatch-phase,
   .moonwatch-item {
     grid-template-columns: 1fr;
