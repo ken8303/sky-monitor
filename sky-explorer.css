@@ -251,12 +251,37 @@ select {
   gap: 12px;
 }
 
+.tonight-grid {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
 .info-card,
 .visible-row {
   padding: 14px 16px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tonight-card {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tonight-card span,
+.tonight-card small {
+  color: var(--muted);
+}
+
+.tonight-card strong {
+  display: block;
+  margin-top: 6px;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.16rem;
 }
 
 .info-card strong,

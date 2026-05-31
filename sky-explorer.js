@@ -69,6 +69,8 @@ const els = {
   stageCoords: document.querySelector("#stage-coords"),
   canvas: document.querySelector("#sky-canvas"),
   canvasFooter: document.querySelector("#canvas-footer"),
+  tonightGrid: document.querySelector("#tonight-grid"),
+  tonightNote: document.querySelector("#tonight-note"),
   objectTitle: document.querySelector("#object-title"),
   objectInfo: document.querySelector("#object-info"),
   objectNote: document.querySelector("#object-note"),
@@ -171,6 +173,51 @@ function rankObjects(location, date) {
     })
     .filter((object) => object.altitude > 0)
     .sort((a, b) => b.score - a.score);
+}
+
+function formatClock(date) {
+  return date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+}
+
+function buildTonightSuggestion(location) {
+  const now = new Date();
+  const samples = Array.from({ length: 13 }, (_, index) => {
+    const sampleDate = new Date(now.getTime() + index * 3600000);
+    const ranked = rankObjects(location, sampleDate);
+    return {
+      date: sampleDate,
+      ranked,
+      best: ranked[0] || null
+    };
+  }).filter((entry) => entry.best);
+
+  if (!samples.length) {
+    return {
+      cards: [
+        ["Tonight status", "Quiet sky", "No strong targets are above the horizon in the next few hours."]
+      ],
+      note: "Try another location or return later when more of the sky has risen."
+    };
+  }
+
+  const bestWindow = samples.reduce((winner, sample) => (
+    !winner || sample.best.score > winner.best.score ? sample : winner
+  ), null);
+  const topNow = samples[0]?.best || bestWindow.best;
+  const suggestion = bestWindow.best.score >= 82
+    ? "Excellent stargazing window"
+    : bestWindow.best.score >= 68
+      ? "Promising stargazing window"
+      : "Casual observing window";
+
+  return {
+    cards: [
+      ["Tonight suggestion", suggestion, `${bestWindow.best.name} looks strongest for the selected location.`],
+      ["Best view time", formatClock(bestWindow.date), `${bestWindow.best.type} peaks near ${Math.round(bestWindow.best.altitude)}° altitude.`],
+      ["Best target now", topNow.name, `${topNow.type} at about ${Math.round(topNow.altitude)}° right now.`]
+    ],
+    note: `${location.name} is most rewarding near ${formatClock(bestWindow.date)} when ${bestWindow.best.name} rises into its best placement.`
+  };
 }
 
 function drawSky() {
@@ -278,8 +325,25 @@ function drawSky() {
   els.stageCoords.textContent = coordinatesLabel(location.latitude, location.longitude);
   els.canvasFooter.textContent = `Showing ${ranked.length} objects above the horizon. Toggle labels, constellations, or atmosphere to simplify the view.`;
 
+  renderTonightSuggestion(location);
   renderInfo(selected, selectedPoint, ranked);
   renderVisibleList(ranked);
+}
+
+function renderTonightSuggestion(location) {
+  const tonight = buildTonightSuggestion(location);
+  els.tonightGrid.innerHTML = tonight.cards
+    .map(
+      ([label, value, detail]) => `
+        <div class="tonight-card">
+          <span>${label}</span>
+          <strong>${value}</strong>
+          <small>${detail}</small>
+        </div>
+      `
+    )
+    .join("");
+  els.tonightNote.textContent = tonight.note;
 }
 
 function renderInfo(selected, selectedPoint, ranked) {

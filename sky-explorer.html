@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="sky-explorer.css?v=20260531a" />
+    <link rel="stylesheet" href="sky-explorer.css?v=20260531b" />
   </head>
   <body>
     <div class="sky-shell">
@@ -79,6 +79,17 @@
           </article>
 
           <aside class="sky-sidebar" id="sky-sidebar">
+            <article class="card panel tonight-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Tonight</p>
+                  <h3>Stargazing suggestion</h3>
+                </div>
+              </div>
+              <div class="tonight-grid" id="tonight-grid"></div>
+              <p class="panel-note" id="tonight-note"></p>
+            </article>
+
             <article class="card panel info-panel">
               <div class="panel-head">
                 <div>
@@ -104,6 +115,6 @@
       </main>
     </div>
 
-    <script src="sky-explorer.js?v=20260531a"></script>
+    <script src="sky-explorer.js?v=20260531b"></script>
   </body>
 </html>
