@@ -26,6 +26,111 @@ const weatherLabels = {
   95: "Thunderstorm"
 };
 
+const astro = (() => {
+  const PI = Math.PI;
+  const rad = PI / 180;
+  const dayMs = 86400000;
+  const J1970 = 2440588;
+  const J2000 = 2451545;
+  const e = rad * 23.4397;
+
+  function toJulian(date) {
+    return date.valueOf() / dayMs - 0.5 + J1970;
+  }
+
+  function fromJulian(julianDate) {
+    return new Date((julianDate + 0.5 - J1970) * dayMs);
+  }
+
+  function toDays(date) {
+    return toJulian(date) - J2000;
+  }
+
+  function rightAscension(l, b) {
+    return Math.atan2(Math.sin(l) * Math.cos(e) - Math.tan(b) * Math.sin(e), Math.cos(l));
+  }
+
+  function declination(l, b) {
+    return Math.asin(Math.sin(b) * Math.cos(e) + Math.cos(b) * Math.sin(e) * Math.sin(l));
+  }
+
+  function solarMeanAnomaly(d) {
+    return rad * (357.5291 + 0.98560028 * d);
+  }
+
+  function eclipticLongitude(m) {
+    const c = rad * (1.9148 * Math.sin(m) + 0.02 * Math.sin(2 * m) + 0.0003 * Math.sin(3 * m));
+    const p = rad * 102.9372;
+    return m + c + p + PI;
+  }
+
+  function sunDeclination(d) {
+    return declination(eclipticLongitude(solarMeanAnomaly(d)), 0);
+  }
+
+  function julianCycle(d, lw) {
+    return Math.round(d - 0.0009 - lw / (2 * PI));
+  }
+
+  function approxTransit(ht, lw, n) {
+    return 0.0009 + (ht + lw) / (2 * PI) + n;
+  }
+
+  function solarTransitJ(ds, m, l) {
+    return J2000 + ds + 0.0053 * Math.sin(m) - 0.0069 * Math.sin(2 * l);
+  }
+
+  function hourAngle(h, phi, dec) {
+    return Math.acos((Math.sin(h) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec)));
+  }
+
+  function observerAngle(height) {
+    return -2.076 * Math.sqrt(height) / 60;
+  }
+
+  function getSetJ(h, lw, phi, dec, n, m, l) {
+    const w = hourAngle(h, phi, dec);
+    const a = approxTransit(w, lw, n);
+    return solarTransitJ(a, m, l);
+  }
+
+  function getTimes(date, latitude, longitude) {
+    const lw = rad * -longitude;
+    const phi = rad * latitude;
+    const dh = observerAngle(0);
+    const d = toDays(date);
+    const n = julianCycle(d, lw);
+    const ds = approxTransit(0, lw, n);
+    const m = solarMeanAnomaly(ds);
+    const l = eclipticLongitude(m);
+    const dec = declination(l, 0);
+    const jNoon = solarTransitJ(ds, m, l);
+
+    const times = {
+      solarNoon: fromJulian(jNoon),
+      nadir: fromJulian(jNoon - 0.5)
+    };
+
+    const values = [
+      [-0.833 + dh, "sunrise", "sunset"],
+      [-6, "dawn", "dusk"],
+      [-12, "nauticalDawn", "nauticalDusk"],
+      [-18, "nightEnd", "night"]
+    ];
+
+    values.forEach(([angle, riseName, setName]) => {
+      const julianSet = getSetJ(angle * rad, lw, phi, dec, n, m, l);
+      const julianRise = jNoon - (julianSet - jNoon);
+      times[riseName] = fromJulian(julianRise);
+      times[setName] = fromJulian(julianSet);
+    });
+
+    return times;
+  }
+
+  return { getTimes };
+})();
+
 const state = {
   locationKey: "dartmoor",
   mode: "visual",
@@ -75,6 +180,19 @@ function clamp(value, min, max) {
 
 function formatClock(isoString) {
   return isoString.slice(11, 16);
+}
+
+function formatLocalClock(date, timezone) {
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: timezone
+  }).format(date);
+}
+
+function isValidDate(value) {
+  return value instanceof Date && !Number.isNaN(value.valueOf());
 }
 
 function weatherLabel(code) {
@@ -150,6 +268,9 @@ function qualityBadge(score) {
 
 function buildTargets(summary) {
   const moonText = `${summary.moon.name.toLowerCase()} at ${summary.moon.illumination}% illumination`;
+  const darkWindowText = summary.darkStart && summary.darkEnd
+    ? `with full darkness from ${summary.darkStart} to ${summary.darkEnd}`
+    : "without a fully dark astronomical window tonight";
 
   const map = {
     visual: summary.bestScore >= 70
@@ -161,7 +282,7 @@ function buildTargets(summary) {
       : [
           ["Bright clusters", `Safer pick while conditions stay ${qualityBadge(summary.bestScore).toLowerCase()}`],
           ["Planets", `Use brighter targets when cloud and humidity stay variable`],
-          ["Moon-aware observing", moonText]
+          ["Moon-aware observing", `${moonText}, ${darkWindowText}`]
         ],
     photo: summary.bestScore >= 70
       ? [
@@ -199,6 +320,7 @@ function deriveSummary(location, forecast) {
   const hourly = forecast.hourly;
   const daily = forecast.daily;
   const todayMoon = moonPhaseForDate(hourly.time[0]);
+  const astroTimes = astro.getTimes(new Date(`${daily.time[0]}T12:00:00Z`), location.latitude, location.longitude);
   const nextEight = hourly.time.slice(0, 8).map((time, index) => ({
     time,
     cloud_cover: hourly.cloud_cover[index],
@@ -227,6 +349,21 @@ function deriveSummary(location, forecast) {
   const bestPeak = formatClock(best.time);
   const bestScore = best.score;
   const currentLabel = weatherLabel(current.weather_code);
+  const hasAstronomicalNight = isValidDate(astroTimes.night) && isValidDate(astroTimes.nightEnd);
+  const darkStart = hasAstronomicalNight ? formatLocalClock(astroTimes.night, forecast.timezone) : null;
+  const darkEnd = hasAstronomicalNight ? formatLocalClock(astroTimes.nightEnd, forecast.timezone) : null;
+  const nauticalDusk = formatLocalClock(astroTimes.nauticalDusk, forecast.timezone);
+  const nauticalDawn = formatLocalClock(astroTimes.nauticalDawn, forecast.timezone);
+  const astroNightHours = hasAstronomicalNight ? Math.max(0, (astroTimes.nightEnd - astroTimes.night) / 3600000) : 0;
+  const moonPenalty = Math.round(todayMoon.illumination * 0.18);
+  const darknessScore = Math.round(clamp(bestScore - moonPenalty + astroNightHours * 3.5 + (!hasAstronomicalNight ? 8 : 0), 8, 96));
+  const darknessTitle = hasAstronomicalNight
+    ? `Astronomical darkness from ${darkStart} to ${darkEnd}`
+    : "No full astronomical night tonight";
+  const darknessBody = hasAstronomicalNight
+    ? `${todayMoon.name} at ${todayMoon.illumination}% illumination, with nautical twilight from ${nauticalDusk} to ${nauticalDawn}.`
+    : `${todayMoon.name} at ${todayMoon.illumination}% illumination, with nautical twilight from ${nauticalDusk} to ${nauticalDawn}. The sky stays in late twilight rather than becoming fully dark.`;
+  const darkHoursLabel = hasAstronomicalNight ? `${astroNightHours.toFixed(1)}h` : "0.0h";
 
   return {
     heroTitle: `Best viewing window starts around ${bestStart} and peaks near ${bestPeak}.`,
@@ -259,19 +396,21 @@ function deriveSummary(location, forecast) {
       body: `The current temperature-dew point spread is about ${dewGap.toFixed(1)}°C, which is a simple proxy for condensation risk.`
     },
     darkness: {
-      title: `${todayMoon.name} at ${todayMoon.illumination}% illumination`,
-      body: `Sunset is ${formatClock(daily.sunset[0])} and sunrise is ${formatClock(daily.sunrise[1] || daily.sunrise[0])} in ${forecast.timezone}.`
+      title: darknessTitle,
+      body: darknessBody
     },
     quicklook: [
       ["Timezone", forecast.timezone, "Location-local forecast"],
       ["Wind", `${Math.round(current.wind_speed_10m)} km/h`, "Live current wind"],
-      ["Range", `${Math.round(daily.temperature_2m_min[0])}° to ${Math.round(daily.temperature_2m_max[0])}°`, "Today's span"]
+      ["Dark Hours", darkHoursLabel, `Score ${darknessScore}/100`]
     ],
     chart: scored.map((item) => item.score),
     moon: todayMoon,
     bestStart,
     bestPeak,
     bestScore,
+    darkStart,
+    darkEnd,
     weatherSummary: currentLabel,
     windText: `${Math.round(current.wind_speed_10m)} km/h`,
     humidityText: `${current.relative_humidity_2m}%`
