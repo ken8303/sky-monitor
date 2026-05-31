@@ -602,6 +602,12 @@ async function reverseGeocode(latitude, longitude) {
   };
 }
 
+function coordinatesLabel(latitude, longitude) {
+  const ns = latitude >= 0 ? "N" : "S";
+  const ew = longitude >= 0 ? "E" : "W";
+  return `${Math.abs(latitude).toFixed(3)}°${ns}, ${Math.abs(longitude).toFixed(3)}°${ew}`;
+}
+
 async function loadLocation(location, statusMessage) {
   els.searchStatus.textContent = statusMessage;
 
@@ -651,12 +657,22 @@ els.deviceLocationButton.addEventListener("click", async () => {
 
   navigator.geolocation.getCurrentPosition(
     async (position) => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      const gpsLabel = coordinatesLabel(latitude, longitude);
+
       try {
-        const foundLocation = await reverseGeocode(position.coords.latitude, position.coords.longitude);
+        const foundLocation = await reverseGeocode(latitude, longitude);
         els.locationSelect.value = "custom";
         await loadLocation(foundLocation, `Loading ${foundLocation.name}...`);
       } catch (error) {
-        els.searchStatus.textContent = "Your coordinates were found, but the location name lookup failed.";
+        const fallbackLocation = {
+          name: `Your area (${gpsLabel})`,
+          latitude,
+          longitude
+        };
+        els.locationSelect.value = "custom";
+        await loadLocation(fallbackLocation, `Loading ${fallbackLocation.name}...`);
       }
     },
     (error) => {
