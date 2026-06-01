@@ -347,6 +347,30 @@ function bestTargetForTonight(location) {
   return objectByName(tonight.bestTargetName || objectCatalog[0].name);
 }
 
+function eligibleNightObjects(location) {
+  const now = new Date();
+  const bestByName = new Map();
+
+  Array.from({ length: 13 }, (_, index) => new Date(now.getTime() + index * 3600000))
+    .forEach((sampleDate) => {
+      const sunAltitude = astro.sunAltitude(sampleDate, location.latitude, location.longitude);
+      if (sunAltitude > -12) {
+        return;
+      }
+
+      rankObjects(location, sampleDate)
+        .filter((object) => object.altitude > 30)
+        .forEach((object) => {
+          const existing = bestByName.get(object.name);
+          if (!existing || object.score > existing.score) {
+            bestByName.set(object.name, object);
+          }
+        });
+    });
+
+  return [...bestByName.values()].sort((a, b) => b.score - a.score);
+}
+
 function buildSelectedTimeline(location, object) {
   const now = new Date();
   const samples = Array.from({ length: 6 }, (_, index) => {
@@ -611,7 +635,9 @@ function renderVisibleList(ranked) {
 }
 
 function populateOptions() {
-  els.objectSelect.innerHTML = objectCatalog
+  const eligible = eligibleNightObjects(state.activeLocation);
+  const options = eligible.length ? eligible : [bestTargetForTonight(state.activeLocation)];
+  els.objectSelect.innerHTML = options
     .map((object) => `<option value="${object.name}">${object.name} · ${object.type}</option>`)
     .join("");
 }
@@ -623,6 +649,7 @@ els.location.addEventListener("change", () => {
   }
   state.locationKey = els.location.value;
   state.activeLocation = next;
+  populateOptions();
   state.selectedName = bestTargetForTonight(next).name;
   els.objectSelect.value = state.selectedName;
   els.locationStatus.textContent = `Using ${next.name}.`;
@@ -664,6 +691,7 @@ els.deviceLocationButton.addEventListener("click", () => {
         const location = await reverseGeocode(latitude, longitude);
         state.locationKey = "custom";
         state.activeLocation = location;
+        populateOptions();
         state.selectedName = bestTargetForTonight(location).name;
         els.location.value = "custom";
         els.objectSelect.value = state.selectedName;
@@ -676,6 +704,7 @@ els.deviceLocationButton.addEventListener("click", () => {
         };
         state.locationKey = "custom";
         state.activeLocation = fallback;
+        populateOptions();
         state.selectedName = bestTargetForTonight(fallback).name;
         els.location.value = "custom";
         els.objectSelect.value = state.selectedName;
