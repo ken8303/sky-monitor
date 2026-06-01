@@ -123,6 +123,7 @@ const els = {
   objectInfo: document.querySelector("#object-info"),
   objectNote: document.querySelector("#object-note"),
   targetTimeline: document.querySelector("#target-timeline"),
+  timelineAxis: document.querySelector("#timeline-axis"),
   timelineNote: document.querySelector("#timeline-note"),
   visibleList: document.querySelector("#visible-list")
 };
@@ -302,20 +303,21 @@ function buildTonightSuggestion(location) {
     const sampleDate = new Date(now.getTime() + index * 3600000);
     const sunAltitude = astro.sunAltitude(sampleDate, location.latitude, location.longitude);
     const ranked = rankObjects(location, sampleDate);
+    const strongNightTargets = ranked.filter((object) => object.altitude > 30);
     return {
       date: sampleDate,
       sunAltitude,
       ranked,
-      best: ranked[0] || null
+      best: strongNightTargets[0] || null
     };
   }).filter((entry) => entry.best && entry.sunAltitude <= -12);
 
   if (!samples.length) {
     return {
       cards: [
-        ["Tonight status", "No dark window soon", "There is no strong night-only target window in the next several hours."]
+        ["Tonight status", "No high dark target soon", "No night-time target climbs above 30° in the next several hours."]
       ],
-      note: "Try another location, wait for darker hours, or check again later when the sky is fully night-dark."
+      note: "Try another location, wait for a later dark window, or choose a target manually if you still want to observe low on the horizon."
     };
   }
 
@@ -548,19 +550,38 @@ function renderObjectPhoto(selected) {
 
 function renderSelectedTimeline(location, object) {
   const timeline = buildSelectedTimeline(location, object);
-  els.targetTimeline.innerHTML = timeline.samples
-    .map((sample) => {
-      const height = sample.visible ? clamp((sample.altitude / 90) * 100, 8, 100) : 6;
+  const width = 640;
+  const height = 220;
+  const padding = 26;
+  const values = timeline.samples.map((sample) => clamp((sample.altitude + 10) / 100, 0, 1));
+  const pointPairs = values.map((value, index) => {
+    const x = padding + (index * (width - padding * 2)) / Math.max(values.length - 1, 1);
+    const y = height - padding - value * (height - padding * 2);
+    return { x, y };
+  });
+  const points = pointPairs.map((point) => `${point.x},${point.y}`).join(" ");
+  const grid = [0.25, 0.5, 0.75]
+    .map((value) => {
+      const y = height - padding - value * (height - padding * 2);
+      const label = Math.round(value * 90 - 10);
       return `
-        <div class="timeline-col">
-          <strong>${sample.label}</strong>
-          <div class="timeline-bar-wrap">
-            <div class="timeline-bar" style="height:${height}%"></div>
-          </div>
-          <span>${sample.visible ? `${sample.altitude}°` : "Below"}</span>
-        </div>
+        <line x1="${padding}" y1="${y}" x2="${width - padding}" y2="${y}" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+        <text x="${padding + 6}" y="${y - 8}" fill="rgba(151,178,197,0.72)" font-size="12">${label}°</text>
       `;
     })
+    .join("");
+
+  els.targetTimeline.innerHTML = `
+    <rect x="0" y="0" width="${width}" height="${height}" fill="rgba(0,0,0,0)" />
+    ${grid}
+    <polyline fill="none" stroke="rgba(122,240,212,0.28)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" points="${points}" />
+    <polyline fill="none" stroke="#7af0d4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${points}" />
+    ${pointPairs.map((point) => {
+      return `<circle cx="${point.x}" cy="${point.y}" r="4.5" fill="#9ff3ff" />`;
+    }).join("")}
+  `;
+  els.timelineAxis.innerHTML = timeline.samples
+    .map((sample) => `<span>${sample.label}<br>${sample.visible ? `${sample.altitude}°` : "Below"}</span>`)
     .join("");
   els.timelineNote.textContent = timeline.note;
 }

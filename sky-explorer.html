@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="sky-explorer.css?v=20260531f" />
+    <link rel="stylesheet" href="sky-explorer.css?v=20260601a" />
   </head>
   <body>
     <div class="sky-shell">
@@ -111,7 +111,10 @@
                   <h3>How this object behaves tonight</h3>
                 </div>
               </div>
-              <div class="target-timeline" id="target-timeline"></div>
+              <div class="timeline-chart-wrap">
+                <svg id="target-timeline" class="timeline-chart" viewBox="0 0 640 220" aria-label="Selected target altitude timeline"></svg>
+              </div>
+              <div class="timeline-axis" id="timeline-axis"></div>
               <p class="panel-note" id="timeline-note"></p>
             </article>
 
@@ -129,6 +132,6 @@
       </main>
     </div>
 
-    <script src="sky-explorer.js?v=20260531f"></script>
+    <script src="sky-explorer.js?v=20260601a"></script>
   </body>
 </html>
