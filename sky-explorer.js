@@ -308,6 +308,78 @@ function projectSky(altitude, azimuth, width, height) {
   };
 }
 
+function pseudoRandom(seed) {
+  const value = Math.sin(seed * 12.9898) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function drawSkyGrid(width, height, horizon) {
+  const rings = [15, 30, 45, 60, 75];
+  rings.forEach((altitude) => {
+    const ring = projectSky(altitude, 0, width, height);
+    ctx.beginPath();
+    ctx.arc(horizon.cx, horizon.cy, Math.abs(ring.y - horizon.cy), 0, Math.PI * 2);
+    ctx.strokeStyle = altitude === 30 ? "rgba(255, 209, 142, 0.2)" : "rgba(151, 178, 197, 0.1)";
+    ctx.lineWidth = altitude === 30 ? 1.4 : 1;
+    ctx.stroke();
+  });
+
+  [0, 45, 90, 135, 180, 225, 270, 315].forEach((azimuth) => {
+    const edge = projectSky(0, azimuth, width, height);
+    ctx.beginPath();
+    ctx.moveTo(horizon.cx, horizon.cy);
+    ctx.lineTo(edge.x, edge.y);
+    ctx.strokeStyle = "rgba(151, 178, 197, 0.08)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+}
+
+function drawBackgroundStars(location, date, width, height) {
+  const count = 160;
+  for (let index = 0; index < count; index += 1) {
+    const ra = pseudoRandom(index + location.latitude) * 24;
+    const dec = pseudoRandom(index + location.longitude + 8) * 180 - 90;
+    const mag = 1.6 + pseudoRandom(index + 3.1) * 4.4;
+    const twinkle = 0.72 + pseudoRandom(index + date.getHours() + date.getMinutes() / 60) * 0.28;
+    const coords = astro.altAz(date, location.latitude, location.longitude, ra, dec);
+    const point = projectSky(coords.altitude, coords.azimuth, width, height);
+
+    if (!point.visible) {
+      continue;
+    }
+
+    const size = clamp(3.8 - mag * 0.45, 0.5, 2.1);
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${0.28 + twinkle * 0.45})`;
+    ctx.fill();
+  }
+}
+
+function drawSelectedHighlight(point) {
+  ctx.beginPath();
+  ctx.arc(point.x, point.y, 14, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(255, 209, 142, 0.95)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(point.x, point.y, 26, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(255, 209, 142, 0.28)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(point.x - 18, point.y);
+  ctx.lineTo(point.x + 18, point.y);
+  ctx.moveTo(point.x, point.y - 18);
+  ctx.lineTo(point.x, point.y + 18);
+  ctx.strokeStyle = "rgba(255, 209, 142, 0.42)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
 function rankObjects(location, date) {
   return objectCatalog
     .map((object) => {
@@ -446,6 +518,18 @@ function drawSky() {
   ctx.fillRect(0, 0, width, height);
 
   const horizon = projectSky(0, 0, width, height);
+  if (state.showAtmosphere) {
+    const glow = ctx.createLinearGradient(0, horizon.cy - horizon.radius * 0.18, 0, horizon.cy + horizon.radius * 0.08);
+    glow.addColorStop(0, "rgba(255, 188, 114, 0)");
+    glow.addColorStop(0.6, "rgba(255, 188, 114, 0.06)");
+    glow.addColorStop(1, "rgba(255, 188, 114, 0.12)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, horizon.cy - horizon.radius * 0.18, width, horizon.radius * 0.32);
+  }
+
+  drawSkyGrid(width, height, horizon);
+  drawBackgroundStars(location, date, width, height);
+
   ctx.beginPath();
   ctx.arc(horizon.cx, horizon.cy, horizon.radius, 0, Math.PI * 2);
   ctx.strokeStyle = "rgba(151, 178, 197, 0.28)";
@@ -507,11 +591,7 @@ function drawSky() {
 
   const selectedPoint = points.get(selected.name);
   if (selectedPoint?.visible) {
-    ctx.beginPath();
-    ctx.arc(selectedPoint.x, selectedPoint.y, 14, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(255, 209, 142, 0.95)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    drawSelectedHighlight(selectedPoint);
   }
 
   const cardinals = [
