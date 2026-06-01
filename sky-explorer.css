@@ -171,6 +171,16 @@ select {
   outline: none;
 }
 
+.location-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+.location-search-button {
+  align-self: stretch;
+}
+
 .location-pill {
   justify-self: start;
 }
@@ -429,6 +439,10 @@ select {
   }
 
   .visible-row {
+    grid-template-columns: 1fr;
+  }
+
+  .location-row {
     grid-template-columns: 1fr;
   }
 

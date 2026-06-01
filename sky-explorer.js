@@ -94,7 +94,6 @@ const constellationLines = [
 ];
 
 const state = {
-  locationKey: "dartmoor",
   activeLocation: presetLocations.dartmoor,
   hoursOffset: 0,
   selectedName: "",
@@ -105,6 +104,7 @@ const state = {
 
 const els = {
   location: document.querySelector("#explorer-location"),
+  locationSearchButton: document.querySelector("#location-search-button"),
   deviceLocationButton: document.querySelector("#device-location-button"),
   locationStatus: document.querySelector("#location-status"),
   objectSelect: document.querySelector("#object-select"),
@@ -258,6 +258,33 @@ async function reverseGeocode(latitude, longitude) {
     name: [match.name, match.admin1, match.country].filter(Boolean).join(", "),
     latitude,
     longitude
+  };
+}
+
+async function fetchLocationBySearch(query) {
+  const params = new URLSearchParams({
+    name: query,
+    count: "1",
+    language: "en",
+    format: "json"
+  });
+  const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?${params.toString()}`);
+
+  if (!response.ok) {
+    throw new Error("Location search failed.");
+  }
+
+  const payload = await response.json();
+  const match = payload.results?.[0];
+
+  if (!match) {
+    throw new Error("No matching location found.");
+  }
+
+  return {
+    name: [match.name, match.admin1, match.country].filter(Boolean).join(", "),
+    latitude: match.latitude,
+    longitude: match.longitude
   };
 }
 
@@ -642,18 +669,40 @@ function populateOptions() {
     .join("");
 }
 
-els.location.addEventListener("change", () => {
-  const next = presetLocations[els.location.value];
-  if (!next) {
+async function applyLocation(location, statusText) {
+  state.activeLocation = location;
+  populateOptions();
+  state.selectedName = bestTargetForTonight(location).name;
+  els.objectSelect.value = state.selectedName;
+  els.location.value = location.name;
+  els.locationStatus.textContent = statusText || `Using ${location.name}.`;
+  drawSky();
+}
+
+els.locationSearchButton.addEventListener("click", async () => {
+  const query = els.location.value.trim();
+  if (query.length < 2) {
+    els.locationStatus.textContent = "Enter at least two characters to search for a place.";
     return;
   }
-  state.locationKey = els.location.value;
-  state.activeLocation = next;
-  populateOptions();
-  state.selectedName = bestTargetForTonight(next).name;
-  els.objectSelect.value = state.selectedName;
-  els.locationStatus.textContent = `Using ${next.name}.`;
-  drawSky();
+
+  els.locationStatus.textContent = `Searching for ${query}...`;
+
+  try {
+    const location = await fetchLocationBySearch(query);
+    await applyLocation(location, `Using ${location.name}.`);
+  } catch (error) {
+    els.locationStatus.textContent = error.message;
+  }
+});
+
+els.location.addEventListener("keydown", async (event) => {
+  if (event.key !== "Enter") {
+    return;
+  }
+
+  event.preventDefault();
+  els.locationSearchButton.click();
 });
 
 els.objectSelect.addEventListener("change", () => {
@@ -689,29 +738,15 @@ els.deviceLocationButton.addEventListener("click", () => {
 
       try {
         const location = await reverseGeocode(latitude, longitude);
-        state.locationKey = "custom";
-        state.activeLocation = location;
-        populateOptions();
-        state.selectedName = bestTargetForTonight(location).name;
-        els.location.value = "custom";
-        els.objectSelect.value = state.selectedName;
-        els.locationStatus.textContent = `Using ${location.name}.`;
+        await applyLocation(location, `Using ${location.name}.`);
       } catch (error) {
         const fallback = {
           name: `Your area (${coordinatesLabel(latitude, longitude)})`,
           latitude,
           longitude
         };
-        state.locationKey = "custom";
-        state.activeLocation = fallback;
-        populateOptions();
-        state.selectedName = bestTargetForTonight(fallback).name;
-        els.location.value = "custom";
-        els.objectSelect.value = state.selectedName;
-        els.locationStatus.textContent = `Using ${fallback.name}.`;
+        await applyLocation(fallback, `Using ${fallback.name}.`);
       }
-
-      drawSky();
     },
     (error) => {
       if (error.code === error.PERMISSION_DENIED) {
@@ -749,5 +784,6 @@ els.toggles.forEach((button) => {
 populateOptions();
 state.selectedName = bestTargetForTonight(state.activeLocation).name;
 els.objectSelect.value = state.selectedName;
+els.location.value = state.activeLocation.name;
 els.locationStatus.textContent = `Using ${state.activeLocation.name}.`;
 drawSky();

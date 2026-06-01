@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="sky-explorer.css?v=20260601a" />
+    <link rel="stylesheet" href="sky-explorer.css?v=20260601b" />
   </head>
   <body>
     <div class="sky-shell">
@@ -34,14 +34,12 @@
         <section class="control-bar card">
           <label class="field">
             <span>Location</span>
-            <select id="explorer-location">
-              <option value="dartmoor">Dartmoor, UK</option>
-              <option value="sedona">Sedona, Arizona</option>
-              <option value="lofoten">Lofoten, Norway</option>
-              <option value="custom">Device location</option>
-            </select>
+            <div class="location-row">
+              <input id="explorer-location" type="text" placeholder="Search city or region" />
+              <button type="button" class="pill location-search-button" id="location-search-button">Search</button>
+            </div>
             <button type="button" class="pill location-pill" id="device-location-button">Use my device location</button>
-            <small class="field-note" id="location-status">Choose a preset or use your current device location.</small>
+            <small class="field-note" id="location-status">Search for a place or use your current device location.</small>
           </label>
 
           <label class="field field-wide">
@@ -132,6 +130,6 @@
       </main>
     </div>
 
-    <script src="sky-explorer.js?v=20260601a"></script>
+    <script src="sky-explorer.js?v=20260601b"></script>
   </body>
 </html>
