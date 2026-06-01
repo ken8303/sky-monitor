@@ -135,6 +135,7 @@ const astro = (() => {
   const dayMs = 86400000;
   const J1970 = 2440588;
   const J2000 = 2451545;
+  const e = rad * 23.4397;
 
   function toJulian(date) {
     return date.valueOf() / dayMs - 0.5 + J1970;
@@ -147,6 +148,24 @@ const astro = (() => {
   function siderealDegrees(date, longitude) {
     const d = toDays(date);
     return ((280.16 + 360.9856235 * d + longitude) % 360 + 360) % 360;
+  }
+
+  function solarMeanAnomaly(d) {
+    return rad * (357.5291 + 0.98560028 * d);
+  }
+
+  function eclipticLongitude(m) {
+    const c = rad * (1.9148 * Math.sin(m) + 0.02 * Math.sin(2 * m) + 0.0003 * Math.sin(3 * m));
+    const p = rad * 102.9372;
+    return m + c + p + PI;
+  }
+
+  function rightAscension(l, b) {
+    return Math.atan2(Math.sin(l) * Math.cos(e) - Math.tan(b) * Math.sin(e), Math.cos(l));
+  }
+
+  function declination(l, b) {
+    return Math.asin(Math.sin(b) * Math.cos(e) + Math.cos(b) * Math.sin(e) * Math.sin(l));
   }
 
   function altAz(date, latitude, longitude, raHours, decDegrees) {
@@ -172,7 +191,23 @@ const astro = (() => {
     };
   }
 
-  return { altAz };
+  function sunAltitude(date, latitude, longitude) {
+    const d = toDays(date);
+    const m = solarMeanAnomaly(d);
+    const l = eclipticLongitude(m);
+    const ra = rightAscension(l, 0);
+    const dec = declination(l, 0);
+    const lst = siderealDegrees(date, longitude) * rad;
+    const lat = latitude * rad;
+    const hourAngle = lst - ra;
+
+    return Math.asin(
+      Math.sin(lat) * Math.sin(dec) +
+      Math.cos(lat) * Math.cos(dec) * Math.cos(hourAngle)
+    ) / rad;
+  }
+
+  return { altAz, sunAltitude };
 })();
 
 function clamp(value, min, max) {
@@ -265,20 +300,22 @@ function buildTonightSuggestion(location) {
   const now = new Date();
   const samples = Array.from({ length: 13 }, (_, index) => {
     const sampleDate = new Date(now.getTime() + index * 3600000);
+    const sunAltitude = astro.sunAltitude(sampleDate, location.latitude, location.longitude);
     const ranked = rankObjects(location, sampleDate);
     return {
       date: sampleDate,
+      sunAltitude,
       ranked,
       best: ranked[0] || null
     };
-  }).filter((entry) => entry.best);
+  }).filter((entry) => entry.best && entry.sunAltitude <= -12);
 
   if (!samples.length) {
     return {
       cards: [
-        ["Tonight status", "Quiet sky", "No strong targets are above the horizon in the next few hours."]
+        ["Tonight status", "No dark window soon", "There is no strong night-only target window in the next several hours."]
       ],
-      note: "Try another location or return later when more of the sky has risen."
+      note: "Try another location, wait for darker hours, or check again later when the sky is fully night-dark."
     };
   }
 
@@ -297,7 +334,7 @@ function buildTonightSuggestion(location) {
     cards: [
       ["Tonight suggestion", suggestion, `${bestWindow.best.name} looks strongest for the selected location.`],
       ["Best view time", formatClock(bestWindow.date), `${bestWindow.best.type} peaks near ${Math.round(bestWindow.best.altitude)}° altitude.`],
-      ["Best target now", topNow.name, `${topNow.type} at about ${Math.round(topNow.altitude)}° right now.`]
+      ["Best target tonight", topNow.name, `${topNow.type} reaches about ${Math.round(topNow.altitude)}° in the dark-sky window.`]
     ],
     note: `${location.name} is most rewarding near ${formatClock(bestWindow.date)} when ${bestWindow.best.name} rises into its best placement.`
   };
