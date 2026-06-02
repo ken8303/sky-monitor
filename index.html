@@ -333,19 +333,14 @@
               <ul id="target-list"></ul>
             </article>
 
-            <article class="card panel">
+            <article class="card panel spotlight-panel planner-spotlight">
               <div class="panel-head">
                 <div>
-                  <p class="eyebrow">Live Notes</p>
-                  <h3>Field checklist</h3>
+                  <p class="eyebrow">Target Spotlight</p>
+                  <h3>Best named objects for this session</h3>
                 </div>
               </div>
-              <div class="notes">
-                <label><input type="checkbox" checked /> Tripod leveled</label>
-                <label><input type="checkbox" checked /> Polar alignment done</label>
-                <label><input type="checkbox" /> Dew heaters on standby</label>
-                <label><input type="checkbox" /> Battery pack topped up</label>
-              </div>
+              <div class="spotlight-list" id="spotlight-list"></div>
             </article>
           </section>
 
@@ -360,28 +355,33 @@
               <div class="runbook-list" id="runbook-list"></div>
             </article>
 
-            <article class="card panel alerts-panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Watchouts</p>
-                  <h3>Conditions that may force a pivot</h3>
+            <div class="planner-side-stack">
+              <article class="card panel">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Live Notes</p>
+                    <h3>Field checklist</h3>
+                  </div>
                 </div>
-              </div>
-              <div class="alerts-list" id="alerts-list"></div>
-              <p class="panel-note" id="alerts-note"></p>
-            </article>
-          </section>
+                <div class="notes">
+                  <label><input type="checkbox" checked /> Tripod leveled</label>
+                  <label><input type="checkbox" checked /> Polar alignment done</label>
+                  <label><input type="checkbox" /> Dew heaters on standby</label>
+                  <label><input type="checkbox" /> Battery pack topped up</label>
+                </div>
+              </article>
 
-          <section class="spotlight-grid">
-            <article class="card panel spotlight-panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Target Spotlight</p>
-                  <h3>Best named objects for this session</h3>
+              <article class="card panel alerts-panel">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Watchouts</p>
+                    <h3>Conditions that may force a pivot</h3>
+                  </div>
                 </div>
-              </div>
-              <div class="spotlight-list" id="spotlight-list"></div>
-            </article>
+                <div class="alerts-list" id="alerts-list"></div>
+                <p class="panel-note" id="alerts-note"></p>
+              </article>
+            </div>
           </section>
         </section>
       </main>

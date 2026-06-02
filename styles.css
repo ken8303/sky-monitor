@@ -278,7 +278,7 @@ a {
 }
 
 .telemetry-grid {
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: 1.34fr 0.66fr;
 }
 
 .astronomy-grid {
@@ -311,16 +311,22 @@ a {
 }
 
 .live-support-grid {
-  grid-template-columns: 1.12fr 0.88fr;
+  grid-template-columns: 0.94fr 1.06fr;
 }
 
 .runbook-grid {
   display: grid;
   gap: 20px;
-  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-columns: 1.26fr 0.74fr;
+  align-items: start;
 }
 
 .spotlight-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.planner-side-stack {
   display: grid;
   gap: 20px;
 }
@@ -450,7 +456,8 @@ a {
 }
 
 .planner-grid {
-  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-columns: 1.18fr 0.82fr;
+  align-items: start;
 }
 
 .insight-grid {
@@ -544,6 +551,11 @@ a {
   border-radius: 20px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.map-panel {
+  position: sticky;
+  top: 88px;
 }
 
 .map-toolbar {
@@ -800,6 +812,10 @@ a {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
+}
+
+.planner-spotlight .spotlight-list {
+  grid-template-columns: 1fr;
 }
 
 .spotlight-card {
@@ -1154,6 +1170,10 @@ a {
 
   .hero-copy h2 {
     max-width: 14ch;
+  }
+
+  .map-panel {
+    position: static;
   }
 }
 
