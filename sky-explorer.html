@@ -61,10 +61,66 @@
         </section>
 
         <nav class="workflow-nav card" aria-label="Explorer workflow">
-          <a href="#plan-section">Plan</a>
           <a href="#observe-section">Observe</a>
+          <a href="#plan-section">Plan</a>
           <a href="#record-section">Record</a>
         </nav>
+
+        <section class="workspace-section" id="observe-section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Observe</p>
+              <h2>Work the sky in real time</h2>
+            </div>
+            <p class="section-copy">Keep the live sky, the selected object, and the altitude trend together so you can move from planning into actual observing without hunting through the page.</p>
+          </div>
+          <div class="section-grid section-grid-observe">
+            <article class="sky-stage card observe-primary" id="sky-stage">
+              <div class="stage-head">
+                <div>
+                  <p class="eyebrow">Live Sky</p>
+                  <h2 id="stage-title">Sky above Dartmoor, UK</h2>
+                </div>
+                <div class="stage-meta">
+                  <strong id="stage-time">Now</strong>
+                  <small id="stage-coords">50.570°N, 3.920°W</small>
+                </div>
+              </div>
+              <div class="canvas-wrap">
+                <canvas id="sky-canvas" width="1200" height="900" aria-label="Interactive sky map"></canvas>
+              </div>
+              <div class="canvas-footer" id="canvas-footer"></div>
+            </article>
+
+            <aside class="observe-stack" id="sky-sidebar">
+              <article class="card panel info-panel observe-focus">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Selected Object</p>
+                    <h3 id="object-title">Andromeda Galaxy</h3>
+                  </div>
+                </div>
+                <div class="object-photo-wrap" id="object-photo-wrap"></div>
+                <div class="info-grid" id="object-info"></div>
+                <p class="panel-note" id="object-note"></p>
+              </article>
+
+              <article class="card panel timeline-panel observe-focus">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Target Timeline</p>
+                    <h3>How this object behaves tonight</h3>
+                  </div>
+                </div>
+                <div class="timeline-chart-wrap">
+                  <svg id="target-timeline" class="timeline-chart" viewBox="0 0 640 220" aria-label="Selected target altitude timeline"></svg>
+                </div>
+                <div class="timeline-axis" id="timeline-axis"></div>
+                <p class="panel-note" id="timeline-note"></p>
+              </article>
+            </aside>
+          </div>
+        </section>
 
         <section class="workspace-section" id="plan-section">
           <div class="section-heading">
@@ -139,62 +195,6 @@
               <div class="alerts-list" id="alerts-list"></div>
               <p class="panel-note" id="alerts-note"></p>
             </article>
-          </div>
-        </section>
-
-        <section class="workspace-section" id="observe-section">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Observe</p>
-              <h2>Work the sky in real time</h2>
-            </div>
-            <p class="section-copy">Keep the live sky, the selected object, and the altitude trend together so you can move from planning into actual observing without hunting through the page.</p>
-          </div>
-          <div class="section-grid section-grid-observe">
-            <article class="sky-stage card observe-primary" id="sky-stage">
-              <div class="stage-head">
-                <div>
-                  <p class="eyebrow">Live Sky</p>
-                  <h2 id="stage-title">Sky above Dartmoor, UK</h2>
-                </div>
-                <div class="stage-meta">
-                  <strong id="stage-time">Now</strong>
-                  <small id="stage-coords">50.570°N, 3.920°W</small>
-                </div>
-              </div>
-              <div class="canvas-wrap">
-                <canvas id="sky-canvas" width="1200" height="900" aria-label="Interactive sky map"></canvas>
-              </div>
-              <div class="canvas-footer" id="canvas-footer"></div>
-            </article>
-
-            <aside class="observe-stack" id="sky-sidebar">
-              <article class="card panel info-panel observe-focus">
-                <div class="panel-head">
-                  <div>
-                    <p class="eyebrow">Selected Object</p>
-                    <h3 id="object-title">Andromeda Galaxy</h3>
-                  </div>
-                </div>
-                <div class="object-photo-wrap" id="object-photo-wrap"></div>
-                <div class="info-grid" id="object-info"></div>
-                <p class="panel-note" id="object-note"></p>
-              </article>
-
-              <article class="card panel timeline-panel observe-focus">
-                <div class="panel-head">
-                  <div>
-                    <p class="eyebrow">Target Timeline</p>
-                    <h3>How this object behaves tonight</h3>
-                  </div>
-                </div>
-                <div class="timeline-chart-wrap">
-                  <svg id="target-timeline" class="timeline-chart" viewBox="0 0 640 220" aria-label="Selected target altitude timeline"></svg>
-                </div>
-                <div class="timeline-axis" id="timeline-axis"></div>
-                <p class="panel-note" id="timeline-note"></p>
-              </article>
-            </aside>
           </div>
         </section>
 
