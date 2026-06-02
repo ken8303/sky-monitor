@@ -1054,9 +1054,12 @@ function drawSky() {
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    if (state.showLabels && (star.mag !== undefined ? star.mag < 1.0 : coords.altitude > 25)) {
-      ctx.fillStyle = "rgba(238,248,255,0.9)";
-      ctx.font = "18px 'IBM Plex Sans'";
+    if (state.showLabels) {
+      ctx.font = star.type && star.type !== "Star" ? "15px 'IBM Plex Sans'" : "14px 'IBM Plex Sans'";
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "rgba(2, 9, 21, 0.88)";
+      ctx.strokeText(star.name, point.x + 10, point.y - 8);
+      ctx.fillStyle = star.type && star.type !== "Star" ? "rgba(187, 255, 240, 0.96)" : "rgba(238, 248, 255, 0.92)";
       ctx.fillText(star.name, point.x + 10, point.y - 8);
     }
   });
