@@ -219,6 +219,62 @@ function currentLocation() {
   return state.activeLocation;
 }
 
+function stateToUrl() {
+  const params = new URLSearchParams();
+  const location = currentLocation();
+  params.set("loc", location.name);
+  params.set("lat", location.latitude.toFixed(4));
+  params.set("lon", location.longitude.toFixed(4));
+  params.set("obj", state.selectedName || bestTargetForTonight(location).name);
+  if (state.hoursOffset !== 0) {
+    params.set("hours", String(state.hoursOffset));
+  }
+  if (!state.showLabels) {
+    params.set("labels", "0");
+  }
+  if (!state.showConstellations) {
+    params.set("constellations", "0");
+  }
+  if (!state.showAtmosphere) {
+    params.set("atmosphere", "0");
+  }
+  return params.toString();
+}
+
+function updateUrlState() {
+  const nextUrl = `${window.location.pathname}?${stateToUrl()}${window.location.hash}`;
+  window.history.replaceState({}, "", nextUrl);
+}
+
+function applyUrlState() {
+  const params = new URLSearchParams(window.location.search);
+  const lat = Number(params.get("lat"));
+  const lon = Number(params.get("lon"));
+  const loc = params.get("loc");
+  const obj = params.get("obj");
+  const hours = Number(params.get("hours"));
+
+  if (loc && Number.isFinite(lat) && Number.isFinite(lon)) {
+    state.activeLocation = {
+      name: loc,
+      latitude: lat,
+      longitude: lon
+    };
+  }
+
+  if (Number.isFinite(hours) && hours >= -12 && hours <= 12) {
+    state.hoursOffset = hours;
+  }
+
+  state.showLabels = params.get("labels") !== "0";
+  state.showConstellations = params.get("constellations") !== "0";
+  state.showAtmosphere = params.get("atmosphere") !== "0";
+
+  if (obj) {
+    state.selectedName = objectByName(obj).name;
+  }
+}
+
 function targetDate() {
   return new Date(Date.now() + state.hoursOffset * 3600000);
 }
@@ -612,6 +668,7 @@ function drawSky() {
   renderTonightSuggestion(location);
   renderInfo(selected, selectedPoint, ranked, location);
   renderVisibleList(ranked);
+  updateUrlState();
 }
 
 function renderTonightSuggestion(location) {
@@ -752,7 +809,9 @@ function populateOptions() {
 async function applyLocation(location, statusText) {
   state.activeLocation = location;
   populateOptions();
-  state.selectedName = bestTargetForTonight(location).name;
+  const chosen = state.selectedName ? objectByName(state.selectedName).name : bestTargetForTonight(location).name;
+  const eligibleNames = [...els.objectSelect.options].map((option) => option.value);
+  state.selectedName = eligibleNames.includes(chosen) ? chosen : bestTargetForTonight(location).name;
   els.objectSelect.value = state.selectedName;
   els.location.value = location.name;
   els.locationStatus.textContent = statusText || `Using ${location.name}.`;
@@ -861,9 +920,25 @@ els.toggles.forEach((button) => {
   });
 });
 
+applyUrlState();
 populateOptions();
-state.selectedName = bestTargetForTonight(state.activeLocation).name;
+{
+  const optionNames = [...els.objectSelect.options].map((option) => option.value);
+  const fallback = bestTargetForTonight(state.activeLocation).name;
+  state.selectedName = optionNames.includes(state.selectedName) ? state.selectedName : fallback;
+}
 els.objectSelect.value = state.selectedName;
 els.location.value = state.activeLocation.name;
 els.locationStatus.textContent = `Using ${state.activeLocation.name}.`;
+els.slider.value = String(state.hoursOffset);
+els.toggles.forEach((button) => {
+  const key = button.dataset.toggle;
+  if (key === "labels") {
+    button.classList.toggle("is-active", state.showLabels);
+  } else if (key === "constellations") {
+    button.classList.toggle("is-active", state.showConstellations);
+  } else if (key === "atmosphere") {
+    button.classList.toggle("is-active", state.showAtmosphere);
+  }
+});
 drawSky();
