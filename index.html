@@ -59,87 +59,108 @@
       </header>
 
       <main class="dashboard">
-        <section class="hero card" id="overview">
-          <div class="hero-copy">
-            <p class="eyebrow" id="hero-eyebrow">Tonight at Dartmoor, UK</p>
-            <h2 id="hero-title">Clearest viewing window starts at 22:40 and peaks near midnight.</h2>
-            <p class="hero-text" id="hero-text"></p>
-            <div class="hero-actions">
-              <button type="button" class="primary" id="plan-button">Open Planner</button>
-              <button type="button" class="secondary" id="location-button">Change Location</button>
+        <section class="dashboard-block overview-block" id="overview">
+          <div class="block-head">
+            <div>
+              <p class="eyebrow">Tonight Overview</p>
+              <h2>Decide quickly if this session is worth the setup</h2>
             </div>
-            <p class="source-note" id="source-note">Using live forecast data and a local moon-phase estimate.</p>
+            <p class="block-copy">Lead with the decision, the best window, and the conditions most likely to change what you do next.</p>
           </div>
-          <div class="hero-stats" id="hero-stats"></div>
+
+          <section class="hero card">
+            <div class="hero-copy">
+              <p class="eyebrow" id="hero-eyebrow">Tonight at Dartmoor, UK</p>
+              <h2 id="hero-title">Clearest viewing window starts at 22:40 and peaks near midnight.</h2>
+              <p class="hero-text" id="hero-text"></p>
+              <div class="hero-actions">
+                <button type="button" class="primary" id="plan-button">Open Planner</button>
+                <button type="button" class="secondary" id="location-button">Change Location</button>
+              </div>
+              <p class="source-note" id="source-note">Using live forecast data and a local moon-phase estimate.</p>
+            </div>
+            <div class="hero-stats" id="hero-stats"></div>
+          </section>
+
+          <section class="status-strip" id="status-strip" aria-label="Live status strip"></section>
+
+          <div class="overview-grid">
+            <section class="forecast-grid" id="forecast">
+              <article class="card panel wide">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Best Window Finder</p>
+                    <h3>Night quality timeline</h3>
+                  </div>
+                  <span class="badge good" id="quality-badge">Excellent</span>
+                </div>
+                <div class="timeline" aria-label="Night quality timeline">
+                  <div class="timeline-row labels" id="timeline-labels">
+                  </div>
+                  <div class="timeline-row bars" id="timeline-bars">
+                  </div>
+                </div>
+                <p class="panel-note" id="quality-note"></p>
+              </article>
+
+              <article class="card panel">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">7-Night Outlook</p>
+                    <h3>Clear sky trend</h3>
+                  </div>
+                </div>
+                <ul class="mini-forecast" id="forecast-list"></ul>
+              </article>
+            </section>
+
+            <section class="conditions-grid" id="conditions">
+              <article class="card panel metric">
+                <div class="ring" style="--value: 86">
+                  <span id="transparency-score">86</span>
+                </div>
+                <div>
+                  <p class="eyebrow">Transparency</p>
+                  <h3 id="transparency-title">Excellent contrast</h3>
+                  <p id="transparency-body">Dry upper air and low haze make faint objects easier to pick out.</p>
+                </div>
+              </article>
+
+              <article class="card panel metric">
+                <div class="ring warm" style="--value: 62">
+                  <span id="dew-score">62</span>
+                </div>
+                <div>
+                  <p class="eyebrow">Dew Point Risk</p>
+                  <h3 id="dew-title">Moderate risk later</h3>
+                  <p id="dew-body">Lens heaters recommended after 01:00 as surface cooling picks up.</p>
+                </div>
+              </article>
+
+              <article class="card panel metric">
+                <div class="moon-card">
+                  <div class="moon"></div>
+                </div>
+                <div>
+                  <p class="eyebrow">Moon & Darkness</p>
+                  <h3 id="dark-title">Dark window starts 22:18</h3>
+                  <p id="dark-body">Moonset before midnight keeps the second half of the night much darker.</p>
+                </div>
+              </article>
+            </section>
+          </div>
         </section>
 
-        <section class="status-strip" id="status-strip" aria-label="Live status strip"></section>
-
-        <section class="forecast-grid" id="forecast">
-          <article class="card panel wide">
-            <div class="panel-head">
-              <div>
-                <p class="eyebrow">Best Window Finder</p>
-                <h3>Night quality timeline</h3>
-              </div>
-              <span class="badge good" id="quality-badge">Excellent</span>
-            </div>
-            <div class="timeline" aria-label="Night quality timeline">
-              <div class="timeline-row labels" id="timeline-labels">
-              </div>
-              <div class="timeline-row bars" id="timeline-bars">
-              </div>
-            </div>
-            <p class="panel-note" id="quality-note"></p>
-          </article>
-
-          <article class="card panel">
-            <div class="panel-head">
-              <div>
-                <p class="eyebrow">7-Night Outlook</p>
-                <h3>Clear sky trend</h3>
-              </div>
-            </div>
-            <ul class="mini-forecast" id="forecast-list"></ul>
-          </article>
-        </section>
-
-        <section class="conditions-grid" id="conditions">
-          <article class="card panel metric">
-            <div class="ring" style="--value: 86">
-              <span id="transparency-score">86</span>
-            </div>
+        <section class="dashboard-block live-block" id="live-conditions">
+          <div class="block-head">
             <div>
-              <p class="eyebrow">Transparency</p>
-              <h3 id="transparency-title">Excellent contrast</h3>
-              <p id="transparency-body">Dry upper air and low haze make faint objects easier to pick out.</p>
+              <p class="eyebrow">Live Conditions</p>
+              <h2>Watch the sky and the weather together</h2>
             </div>
-          </article>
+            <p class="block-copy">Keep the near-term telemetry, cloud layers, and area map in one place so the tactical view is easy to read.</p>
+          </div>
 
-          <article class="card panel metric">
-            <div class="ring warm" style="--value: 62">
-              <span id="dew-score">62</span>
-            </div>
-            <div>
-              <p class="eyebrow">Dew Point Risk</p>
-              <h3 id="dew-title">Moderate risk later</h3>
-              <p id="dew-body">Lens heaters recommended after 01:00 as surface cooling picks up.</p>
-            </div>
-          </article>
-
-          <article class="card panel metric">
-            <div class="moon-card">
-              <div class="moon"></div>
-            </div>
-            <div>
-              <p class="eyebrow">Moon & Darkness</p>
-              <h3 id="dark-title">Dark window starts 22:18</h3>
-              <p id="dark-body">Moonset before midnight keeps the second half of the night much darker.</p>
-            </div>
-          </article>
-        </section>
-
-        <section class="telemetry-grid">
+          <section class="telemetry-grid">
           <article class="card panel telemetry-panel">
             <div class="panel-head">
               <div>
@@ -185,9 +206,72 @@
             <div class="map-spotlight" id="map-spotlight"></div>
             <div class="map-meta" id="map-meta"></div>
           </article>
+          </section>
+
+          <div class="live-support-grid">
+            <section class="atmosphere-grid">
+              <article class="card panel atmosphere-panel">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Atmosphere</p>
+                    <h3>Low, mid, and high cloud layers</h3>
+                  </div>
+                </div>
+                <div class="chart-legend" id="atmosphere-legend">
+                  <span><i class="legend-dot low-cloud"></i>Low cloud</span>
+                  <span><i class="legend-dot mid-cloud"></i>Mid cloud</span>
+                  <span><i class="legend-dot high-cloud"></i>High cloud</span>
+                </div>
+                <div class="layer-chart" id="layer-chart" aria-label="Cloud layer breakdown"></div>
+                <div class="trend-axis" id="layer-axis"></div>
+              </article>
+
+              <article class="card panel seeing-panel">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Stability</p>
+                    <h3>Seeing and setup pressure</h3>
+                  </div>
+                </div>
+                <div class="seeing-grid" id="seeing-grid"></div>
+                <p class="panel-note" id="seeing-note"></p>
+              </article>
+            </section>
+
+            <section class="insight-grid">
+              <article class="card panel">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Hourly Quality</p>
+                    <h3>Session confidence curve</h3>
+                  </div>
+                </div>
+                <div class="chart-bars" id="chart-bars" aria-label="Hourly quality chart"></div>
+              </article>
+
+              <article class="card panel">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Quick Look</p>
+                    <h3>Field conditions</h3>
+                  </div>
+                </div>
+                <div class="quicklook-grid" id="quicklook"></div>
+              </article>
+            </section>
+          </div>
         </section>
 
-        <section class="astronomy-grid">
+        <section class="dashboard-block astronomy-block" id="astronomy">
+          <div class="block-head">
+            <div>
+              <p class="eyebrow">Astronomy</p>
+              <h2>Targets, altitude, and moon impact</h2>
+            </div>
+            <p class="block-copy">Keep the object-facing parts of the night together so the dashboard feels distinct from the operational weather view.</p>
+          </div>
+
+          <section class="astronomy-grid">
           <article class="card panel target-panel">
             <div class="panel-head">
               <div>
@@ -221,124 +305,84 @@
             <div class="moonwatch-grid" id="moonwatch-grid"></div>
             <p class="panel-note" id="moonwatch-note"></p>
           </article>
+          </section>
         </section>
 
-        <section class="atmosphere-grid">
-          <article class="card panel atmosphere-panel">
-            <div class="panel-head">
-              <div>
-                <p class="eyebrow">Atmosphere</p>
-                <h3>Low, mid, and high cloud layers</h3>
-              </div>
+        <section class="dashboard-block planner-block" id="planner">
+          <div class="block-head">
+            <div>
+              <p class="eyebrow">Planner</p>
+              <h2>Turn the forecast into a usable session plan</h2>
             </div>
-            <div class="chart-legend" id="atmosphere-legend">
-              <span><i class="legend-dot low-cloud"></i>Low cloud</span>
-              <span><i class="legend-dot mid-cloud"></i>Mid cloud</span>
-              <span><i class="legend-dot high-cloud"></i>High cloud</span>
-            </div>
-            <div class="layer-chart" id="layer-chart" aria-label="Cloud layer breakdown"></div>
-            <div class="trend-axis" id="layer-axis"></div>
-          </article>
+            <p class="block-copy">Group the recommendation engine, the runbook, and the named-object picks so the planning lane feels coherent.</p>
+          </div>
 
-          <article class="card panel seeing-panel">
-            <div class="panel-head">
-              <div>
-                <p class="eyebrow">Stability</p>
-                <h3>Seeing and setup pressure</h3>
+          <section class="planner-grid">
+            <article class="card panel checklist">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Session Planner</p>
+                  <h3>Recommended targets</h3>
+                </div>
+                <div class="segmented-control" aria-label="Planning mode">
+                  <button type="button" data-mode="visual" class="is-active">Visual</button>
+                  <button type="button" data-mode="photo">Photo</button>
+                  <button type="button" data-mode="travel">Travel</button>
+                </div>
               </div>
-            </div>
-            <div class="seeing-grid" id="seeing-grid"></div>
-            <p class="panel-note" id="seeing-note"></p>
-          </article>
-        </section>
+              <ul id="target-list"></ul>
+            </article>
 
-        <section class="insight-grid">
-          <article class="card panel">
-            <div class="panel-head">
-              <div>
-                <p class="eyebrow">Hourly Quality</p>
-                <h3>Session confidence curve</h3>
+            <article class="card panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Live Notes</p>
+                  <h3>Field checklist</h3>
+                </div>
               </div>
-            </div>
-            <div class="chart-bars" id="chart-bars" aria-label="Hourly quality chart"></div>
-          </article>
+              <div class="notes">
+                <label><input type="checkbox" checked /> Tripod leveled</label>
+                <label><input type="checkbox" checked /> Polar alignment done</label>
+                <label><input type="checkbox" /> Dew heaters on standby</label>
+                <label><input type="checkbox" /> Battery pack topped up</label>
+              </div>
+            </article>
+          </section>
 
-          <article class="card panel">
-            <div class="panel-head">
-              <div>
-                <p class="eyebrow">Quick Look</p>
-                <h3>Field conditions</h3>
+          <section class="runbook-grid">
+            <article class="card panel runbook-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Night Run</p>
+                  <h3>Hour-by-hour observing plan</h3>
+                </div>
               </div>
-            </div>
-            <div class="quicklook-grid" id="quicklook"></div>
-          </article>
-        </section>
+              <div class="runbook-list" id="runbook-list"></div>
+            </article>
 
-        <section class="planner-grid" id="planner">
-          <article class="card panel checklist">
-            <div class="panel-head">
-              <div>
-                <p class="eyebrow">Session Planner</p>
-                <h3>Recommended targets</h3>
+            <article class="card panel alerts-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Watchouts</p>
+                  <h3>Conditions that may force a pivot</h3>
+                </div>
               </div>
-              <div class="segmented-control" aria-label="Planning mode">
-                <button type="button" data-mode="visual" class="is-active">Visual</button>
-                <button type="button" data-mode="photo">Photo</button>
-                <button type="button" data-mode="travel">Travel</button>
-              </div>
-            </div>
-            <ul id="target-list"></ul>
-          </article>
+              <div class="alerts-list" id="alerts-list"></div>
+              <p class="panel-note" id="alerts-note"></p>
+            </article>
+          </section>
 
-          <article class="card panel">
-            <div class="panel-head">
-              <div>
-                <p class="eyebrow">Live Notes</p>
-                <h3>Field checklist</h3>
+          <section class="spotlight-grid">
+            <article class="card panel spotlight-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Target Spotlight</p>
+                  <h3>Best named objects for this session</h3>
+                </div>
               </div>
-            </div>
-            <div class="notes">
-              <label><input type="checkbox" checked /> Tripod leveled</label>
-              <label><input type="checkbox" checked /> Polar alignment done</label>
-              <label><input type="checkbox" /> Dew heaters on standby</label>
-              <label><input type="checkbox" /> Battery pack topped up</label>
-            </div>
-          </article>
-        </section>
-
-        <section class="runbook-grid">
-          <article class="card panel runbook-panel">
-            <div class="panel-head">
-              <div>
-                <p class="eyebrow">Night Run</p>
-                <h3>Hour-by-hour observing plan</h3>
-              </div>
-            </div>
-            <div class="runbook-list" id="runbook-list"></div>
-          </article>
-
-          <article class="card panel alerts-panel">
-            <div class="panel-head">
-              <div>
-                <p class="eyebrow">Watchouts</p>
-                <h3>Conditions that may force a pivot</h3>
-              </div>
-            </div>
-            <div class="alerts-list" id="alerts-list"></div>
-            <p class="panel-note" id="alerts-note"></p>
-          </article>
-        </section>
-
-        <section class="spotlight-grid">
-          <article class="card panel spotlight-panel">
-            <div class="panel-head">
-              <div>
-                <p class="eyebrow">Target Spotlight</p>
-                <h3>Best named objects for this session</h3>
-              </div>
-            </div>
-            <div class="spotlight-list" id="spotlight-list"></div>
-          </article>
+              <div class="spotlight-list" id="spotlight-list"></div>
+            </article>
+          </section>
         </section>
       </main>
     </div>
