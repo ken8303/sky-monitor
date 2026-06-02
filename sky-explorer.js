@@ -131,7 +131,8 @@ const state = {
   selectedName: "",
   showLabels: true,
   showConstellations: true,
-  showAtmosphere: true
+  showAtmosphere: true,
+  noteDraft: ""
 };
 
 const els = {
@@ -161,10 +162,44 @@ const els = {
   astronomyNote: document.querySelector("#astronomy-note"),
   seasonalList: document.querySelector("#seasonal-list"),
   seasonalNote: document.querySelector("#seasonal-note"),
-  visibleList: document.querySelector("#visible-list")
+  routeList: document.querySelector("#route-list"),
+  routeNote: document.querySelector("#route-note"),
+  alertsList: document.querySelector("#alerts-list"),
+  alertsNote: document.querySelector("#alerts-note"),
+  visibleList: document.querySelector("#visible-list"),
+  sessionNote: document.querySelector("#session-note"),
+  saveNoteButton: document.querySelector("#save-note-button"),
+  clearNoteButton: document.querySelector("#clear-note-button"),
+  recordStatus: document.querySelector("#record-status"),
+  notesList: document.querySelector("#notes-list"),
+  savePlanButton: document.querySelector("#save-plan-button"),
+  plansNote: document.querySelector("#plans-note"),
+  plansList: document.querySelector("#plans-list")
 };
 
 const ctx = els.canvas.getContext("2d");
+const storageKeys = {
+  notes: "sky-explorer-notes",
+  plans: "sky-explorer-plans"
+};
+
+function loadStoredList(key) {
+  try {
+    const raw = window.localStorage?.getItem(key);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredList(key, items) {
+  try {
+    window.localStorage?.setItem(key, JSON.stringify(items));
+  } catch {
+    // Ignore storage errors and keep the live session usable.
+  }
+}
 
 const astro = (() => {
   const PI = Math.PI;
@@ -984,6 +1019,101 @@ function buildSeasonalTargets(location) {
   };
 }
 
+function buildNightRoute(location) {
+  const checkpoints = [
+    { label: "Start", offsetHours: 0, detail: "Begin with the strongest object that is already comfortable to frame." },
+    { label: "+2h", offsetHours: 2, detail: "Shift once the sky deepens or a seasonal object climbs into a cleaner altitude." },
+    { label: "+4h", offsetHours: 4, detail: "Use the late window for the object that is peaking highest after midnight." }
+  ];
+  const usedNames = new Set();
+  const route = checkpoints.map((checkpoint) => {
+    const date = new Date(Date.now() + checkpoint.offsetHours * 3600000);
+    const ranked = astro.sunAltitude(date, location.latitude, location.longitude) <= -6
+      ? rankObjects(location, date).filter((item) => item.altitude > 25)
+      : [];
+    const pick = ranked.find((item) => !usedNames.has(item.name)) || ranked[0] || null;
+    if (pick) {
+      usedNames.add(pick.name);
+    }
+    return {
+      ...checkpoint,
+      timeLabel: formatClock(date, location),
+      target: pick
+    };
+  });
+
+  const usable = route.filter((item) => item.target);
+  return {
+    steps: route,
+    note: usable.length
+      ? `Start with ${usable[0].target.name}${usable[1] ? `, then hand off to ${usable[1].target.name}` : ""}${usable[2] ? ` and finish on ${usable[2].target.name}` : ""}.`
+      : "The next several hours do not offer a comfortable dark-sky route, so this may be a low-value session."
+  };
+}
+
+function buildWatchouts(location, selected, ranked) {
+  const astronomy = buildAstronomySummary(location);
+  const moonState = describeMoonImpact(location);
+  const selectedVisible = ranked.find((item) => item.name === selected.name);
+  const alerts = [];
+
+  if (astronomy.cards[2][1] === "No true astronomical dark") {
+    alerts.push({
+      label: "Darkness",
+      title: "No fully dark window tonight",
+      detail: "Twilight never reaches full astronomical dark in the sampled window, so faint galaxies and nebulae will underperform."
+    });
+  }
+
+  if (moonState.summary === "Bright moonlight") {
+    alerts.push({
+      label: "Moonlight",
+      title: "Bright moon above the horizon",
+      detail: "Save faint diffuse targets for after moonset or switch to brighter stars, clusters, or compact nebulae first."
+    });
+  }
+
+  if (!selectedVisible) {
+    alerts.push({
+      label: "Target",
+      title: `${selected.name} is below the horizon right now`,
+      detail: "Use the route panel or shortlist to choose a target that is already up while you wait for it to rise."
+    });
+  } else if (selectedVisible.altitude < 30) {
+    alerts.push({
+      label: "Altitude",
+      title: `${selected.name} is still low`,
+      detail: "Low-altitude targets are more vulnerable to haze and city glow. If you can wait, the view should improve as it climbs."
+    });
+  }
+
+  if (!alerts.length) {
+    alerts.push({
+      label: "Green light",
+      title: "The current session setup looks clean",
+      detail: "Darkness, moonlight, and target altitude are all supportive enough to keep moving with the current plan."
+    });
+  }
+
+  return {
+    alerts,
+    note: alerts[0].detail
+  };
+}
+
+function buildPlanSnapshot(location, selected) {
+  const tonight = buildTonightSuggestion(location);
+  const astronomy = buildAstronomySummary(location);
+  const time = formatStageTime(targetDate(), location);
+  return {
+    createdAt: new Date().toISOString(),
+    title: `${selected.name} from ${location.name}`,
+    location: location.name,
+    object: selected.name,
+    summary: `${time} · ${tonight.cards[0]?.[1] || "Night session"} · ${astronomy.cards[2]?.[1] || "No dark window"}`
+  };
+}
+
 function drawSky() {
   const width = els.canvas.width;
   const height = els.canvas.height;
@@ -1102,9 +1232,12 @@ function drawSky() {
 
   renderTonightSuggestion(location);
   renderAstronomySummary(location);
+  renderNightRoute(location);
+  renderAlerts(location, selected, ranked);
   renderInfo(selected, selectedPoint, ranked, location);
   renderSeasonalPack(location);
   renderVisibleList(ranked);
+  renderRecordPanels(location, selected);
   updateUrlState();
 }
 
@@ -1269,6 +1402,35 @@ function renderSeasonalPack(location) {
   els.seasonalNote.textContent = `${pack.title}. ${pack.note}`;
 }
 
+function renderNightRoute(location) {
+  const route = buildNightRoute(location);
+  els.routeList.innerHTML = route.steps
+    .map((step) => `
+      <div class="route-step">
+        <span class="route-badge">${step.label}</span>
+        <strong>${step.target ? `${step.target.name} at ${step.timeLabel}` : `Hold at ${step.timeLabel}`}</strong>
+        <small>${step.target ? `${step.target.type} · ${Math.round(step.target.altitude)}° high · score ${step.target.score}/100` : "No clean dark-sky target at this checkpoint."}</small>
+        <span>${step.detail}</span>
+      </div>
+    `)
+    .join("");
+  els.routeNote.textContent = route.note;
+}
+
+function renderAlerts(location, selected, ranked) {
+  const watchouts = buildWatchouts(location, selected, ranked);
+  els.alertsList.innerHTML = watchouts.alerts
+    .map((alert) => `
+      <div class="alert-row">
+        <span class="alert-badge">${alert.label}</span>
+        <strong>${alert.title}</strong>
+        <small>${alert.detail}</small>
+      </div>
+    `)
+    .join("");
+  els.alertsNote.textContent = watchouts.note;
+}
+
 function renderVisibleList(ranked) {
   els.visibleList.innerHTML = ranked.slice(0, 6)
     .map(
@@ -1291,6 +1453,46 @@ function renderVisibleList(ranked) {
       drawSky();
     });
   });
+}
+
+function renderRecordPanels(location, selected) {
+  const notes = loadStoredList(storageKeys.notes);
+  const plans = loadStoredList(storageKeys.plans);
+
+  els.sessionNote.value = state.noteDraft;
+  els.notesList.innerHTML = notes.length
+    ? notes.map((entry) => `
+        <div class="record-entry">
+          <strong>${entry.object} · ${entry.location}</strong>
+          <small>${entry.timeLabel}</small>
+          <span>${entry.text}</span>
+        </div>
+      `).join("")
+    : `
+      <div class="record-entry">
+        <strong>No observer notes yet</strong>
+        <span>Save a note here once you have something worth remembering from the session.</span>
+      </div>
+    `;
+
+  els.plansList.innerHTML = plans.length
+    ? plans.map((entry) => `
+        <div class="record-entry">
+          <strong>${entry.title}</strong>
+          <small>${entry.timeLabel}</small>
+          <span>${entry.summary}</span>
+        </div>
+      `).join("")
+    : `
+      <div class="record-entry">
+        <strong>No saved plans yet</strong>
+        <span>Save the current setup once the route and target choice feel right.</span>
+      </div>
+    `;
+
+  els.recordStatus.textContent = state.noteDraft.trim()
+    ? `Drafting a note for ${selected.name} from ${location.name}.`
+    : "No note saved yet for this session.";
 }
 
 function populateOptions() {
@@ -1358,6 +1560,53 @@ els.resetTime.addEventListener("click", () => {
   state.hoursOffset = 0;
   els.slider.value = "0";
   drawSky();
+});
+
+els.sessionNote.addEventListener("input", () => {
+  state.noteDraft = els.sessionNote.value;
+  renderRecordPanels(currentLocation(), objectByName(state.selectedName || bestTargetForTonight(currentLocation()).name));
+});
+
+els.saveNoteButton.addEventListener("click", () => {
+  const text = state.noteDraft.trim();
+  if (!text) {
+    els.recordStatus.textContent = "Write a quick observer note before saving it.";
+    return;
+  }
+
+  const location = currentLocation();
+  const selected = objectByName(state.selectedName || bestTargetForTonight(location).name);
+  const notes = loadStoredList(storageKeys.notes);
+  notes.unshift({
+    location: location.name,
+    object: selected.name,
+    text,
+    timeLabel: formatStageTime(targetDate(), location)
+  });
+  saveStoredList(storageKeys.notes, notes.slice(0, 8));
+  state.noteDraft = "";
+  els.recordStatus.textContent = `Saved a note for ${selected.name}.`;
+  renderRecordPanels(location, selected);
+});
+
+els.clearNoteButton.addEventListener("click", () => {
+  state.noteDraft = "";
+  els.recordStatus.textContent = "Draft cleared.";
+  renderRecordPanels(currentLocation(), objectByName(state.selectedName || bestTargetForTonight(currentLocation()).name));
+});
+
+els.savePlanButton.addEventListener("click", () => {
+  const location = currentLocation();
+  const selected = objectByName(state.selectedName || bestTargetForTonight(location).name);
+  const snapshot = buildPlanSnapshot(location, selected);
+  const plans = loadStoredList(storageKeys.plans);
+  plans.unshift({
+    ...snapshot,
+    timeLabel: formatStageTime(targetDate(), location)
+  });
+  saveStoredList(storageKeys.plans, plans.slice(0, 8));
+  els.plansNote.textContent = `Saved ${snapshot.title} for quick reuse later.`;
+  renderRecordPanels(location, selected);
 });
 
 els.deviceLocationButton.addEventListener("click", () => {

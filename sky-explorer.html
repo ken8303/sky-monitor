@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="sky-explorer.css?v=20260602c" />
+    <link rel="stylesheet" href="sky-explorer.css?v=20260602d" />
   </head>
   <body>
     <div class="sky-shell">
@@ -60,25 +60,21 @@
           </div>
         </section>
 
-        <section class="viewer-grid">
-          <article class="sky-stage card" id="sky-stage">
-            <div class="stage-head">
-              <div>
-                <p class="eyebrow">Live Sky</p>
-                <h2 id="stage-title">Sky above Dartmoor, UK</h2>
-              </div>
-              <div class="stage-meta">
-                <strong id="stage-time">Now</strong>
-                <small id="stage-coords">50.570°N, 3.920°W</small>
-              </div>
-            </div>
-            <div class="canvas-wrap">
-              <canvas id="sky-canvas" width="1200" height="900" aria-label="Interactive sky map"></canvas>
-            </div>
-            <div class="canvas-footer" id="canvas-footer"></div>
-          </article>
+        <nav class="workflow-nav card" aria-label="Explorer workflow">
+          <a href="#plan-section">Plan</a>
+          <a href="#observe-section">Observe</a>
+          <a href="#record-section">Record</a>
+        </nav>
 
-          <aside class="sky-sidebar" id="sky-sidebar">
+        <section class="workspace-section" id="plan-section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Plan</p>
+              <h2>Build tonight’s session</h2>
+            </div>
+            <p class="section-copy">Use the night summary, shortlist, route, and watchouts to decide whether tonight is worth setting up for and what to observe first.</p>
+          </div>
+          <div class="section-grid section-grid-plan">
             <article class="card panel tonight-panel">
               <div class="panel-head">
                 <div>
@@ -88,32 +84,6 @@
               </div>
               <div class="tonight-grid" id="tonight-grid"></div>
               <p class="panel-note" id="tonight-note"></p>
-            </article>
-
-            <article class="card panel info-panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Selected Object</p>
-                  <h3 id="object-title">Andromeda Galaxy</h3>
-                </div>
-              </div>
-              <div class="object-photo-wrap" id="object-photo-wrap"></div>
-              <div class="info-grid" id="object-info"></div>
-              <p class="panel-note" id="object-note"></p>
-            </article>
-
-            <article class="card panel timeline-panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Target Timeline</p>
-                  <h3>How this object behaves tonight</h3>
-                </div>
-              </div>
-              <div class="timeline-chart-wrap">
-                <svg id="target-timeline" class="timeline-chart" viewBox="0 0 640 220" aria-label="Selected target altitude timeline"></svg>
-              </div>
-              <div class="timeline-axis" id="timeline-axis"></div>
-              <p class="panel-note" id="timeline-note"></p>
             </article>
 
             <article class="card panel astronomy-panel">
@@ -138,20 +108,139 @@
               <p class="panel-note" id="seasonal-note"></p>
             </article>
 
+            <article class="card panel route-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Route</p>
+                  <h3>Suggested observing flow</h3>
+                </div>
+              </div>
+              <div class="route-list" id="route-list"></div>
+              <p class="panel-note" id="route-note"></p>
+            </article>
+
+            <article class="card panel alerts-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Alerts</p>
+                  <h3>What could spoil the session</h3>
+                </div>
+              </div>
+              <div class="alerts-list" id="alerts-list"></div>
+              <p class="panel-note" id="alerts-note"></p>
+            </article>
+
             <article class="card panel visible-panel">
               <div class="panel-head">
                 <div>
-                  <p class="eyebrow">Visible Tonight</p>
+                  <p class="eyebrow">Shortlist</p>
                   <h3>Highest-value targets</h3>
                 </div>
               </div>
               <div class="visible-list" id="visible-list"></div>
             </article>
-          </aside>
+          </div>
+        </section>
+
+        <section class="workspace-section" id="observe-section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Observe</p>
+              <h2>Work the sky in real time</h2>
+            </div>
+            <p class="section-copy">Keep the live sky, the selected object, and the altitude trend together so you can move from planning into actual observing without hunting through the page.</p>
+          </div>
+          <div class="section-grid section-grid-observe">
+            <article class="sky-stage card" id="sky-stage">
+              <div class="stage-head">
+                <div>
+                  <p class="eyebrow">Live Sky</p>
+                  <h2 id="stage-title">Sky above Dartmoor, UK</h2>
+                </div>
+                <div class="stage-meta">
+                  <strong id="stage-time">Now</strong>
+                  <small id="stage-coords">50.570°N, 3.920°W</small>
+                </div>
+              </div>
+              <div class="canvas-wrap">
+                <canvas id="sky-canvas" width="1200" height="900" aria-label="Interactive sky map"></canvas>
+              </div>
+              <div class="canvas-footer" id="canvas-footer"></div>
+            </article>
+
+            <aside class="observe-stack" id="sky-sidebar">
+              <article class="card panel info-panel">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Selected Object</p>
+                    <h3 id="object-title">Andromeda Galaxy</h3>
+                  </div>
+                </div>
+                <div class="object-photo-wrap" id="object-photo-wrap"></div>
+                <div class="info-grid" id="object-info"></div>
+                <p class="panel-note" id="object-note"></p>
+              </article>
+
+              <article class="card panel timeline-panel">
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Target Timeline</p>
+                    <h3>How this object behaves tonight</h3>
+                  </div>
+                </div>
+                <div class="timeline-chart-wrap">
+                  <svg id="target-timeline" class="timeline-chart" viewBox="0 0 640 220" aria-label="Selected target altitude timeline"></svg>
+                </div>
+                <div class="timeline-axis" id="timeline-axis"></div>
+                <p class="panel-note" id="timeline-note"></p>
+              </article>
+            </aside>
+          </div>
+        </section>
+
+        <section class="workspace-section" id="record-section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Record</p>
+              <h2>Keep notes and save useful sessions</h2>
+            </div>
+            <p class="section-copy">Capture a live observer note, keep a small history, and save the current plan so a good setup is easy to revisit later.</p>
+          </div>
+          <div class="section-grid section-grid-record">
+            <article class="card panel notes-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Notes</p>
+                  <h3>Observer log</h3>
+                </div>
+              </div>
+              <textarea id="session-note" class="record-textarea" placeholder="Write what you noticed, what worked, and what to change next time."></textarea>
+              <div class="record-actions">
+                <button type="button" class="pill is-active" id="save-note-button">Save note</button>
+                <button type="button" class="pill" id="clear-note-button">Clear draft</button>
+              </div>
+              <p class="panel-note" id="record-status">No note saved yet for this session.</p>
+              <div class="record-list" id="notes-list"></div>
+            </article>
+
+            <article class="card panel plans-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Saved Plans</p>
+                  <h3>Reusable night snapshots</h3>
+                </div>
+              </div>
+              <div class="record-actions">
+                <button type="button" class="pill is-active" id="save-plan-button">Save current plan</button>
+              </div>
+              <p class="panel-note" id="plans-note">Save the current location, object, dark window, and moon conditions as a quick reference.</p>
+              <div class="record-list" id="plans-list"></div>
+            </article>
+          </div>
         </section>
       </main>
     </div>
 
-    <script src="sky-explorer.js?v=20260602c"></script>
+    <script src="sky-explorer.js?v=20260602d"></script>
   </body>
 </html>

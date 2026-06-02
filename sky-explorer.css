@@ -28,7 +28,8 @@ body {
 button,
 a,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -192,11 +193,66 @@ select {
   align-items: end;
 }
 
-.viewer-grid {
-  display: grid;
-  grid-template-columns: 1.4fr 0.75fr;
+.workflow-nav {
+  margin-top: 18px;
+  padding: 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 12px;
+  z-index: 3;
+}
+
+.workflow-nav a {
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--text);
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.workspace-section {
+  margin-top: 28px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
   gap: 20px;
-  margin-top: 20px;
+  margin-bottom: 16px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(1.5rem, 2.3vw, 2.2rem);
+}
+
+.section-copy {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.section-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.section-grid-plan {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.section-grid-observe {
+  grid-template-columns: 1.38fr 0.82fr;
+}
+
+.section-grid-record {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .sky-stage {
@@ -255,7 +311,7 @@ select {
   line-height: 1.6;
 }
 
-.sky-sidebar {
+.observe-stack {
   display: grid;
   gap: 20px;
 }
@@ -266,7 +322,10 @@ select {
 
 .info-grid,
 .visible-list,
-.seasonal-list {
+.seasonal-list,
+.route-list,
+.alerts-list,
+.record-list {
   margin-top: 18px;
   display: grid;
   gap: 12px;
@@ -368,7 +427,10 @@ select {
 .visible-row,
 .tonight-card,
 .seasonal-card,
-.astronomy-card {
+.astronomy-card,
+.route-step,
+.alert-row,
+.record-entry {
   padding: 14px 16px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.04);
@@ -411,7 +473,11 @@ select {
 .astronomy-card span,
 .astronomy-card small,
 .seasonal-card span,
-.seasonal-card small {
+.seasonal-card small,
+.route-step span,
+.alert-row span,
+.record-entry span,
+.record-entry small {
   color: var(--muted);
 }
 
@@ -455,6 +521,62 @@ select {
   background: rgba(255, 255, 255, 0.05);
 }
 
+.route-step,
+.alert-row,
+.record-entry {
+  display: grid;
+  gap: 6px;
+}
+
+.route-step strong,
+.alert-row strong,
+.record-entry strong {
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.route-badge,
+.alert-badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.74rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.route-badge {
+  color: #062133;
+  background: linear-gradient(135deg, var(--warm), #ffe6b7);
+}
+
+.alert-badge {
+  color: #ffe9da;
+  background: rgba(255, 149, 94, 0.12);
+  border-color: rgba(255, 149, 94, 0.24);
+}
+
+.record-textarea {
+  width: 100%;
+  min-height: 190px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  resize: vertical;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+  outline: none;
+}
+
+.record-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .visible-row:hover,
 .visible-row:focus-visible {
   transform: translateY(-1px);
@@ -472,7 +594,9 @@ select {
 
 @media (max-width: 1100px) {
   .control-bar,
-  .viewer-grid {
+  .section-grid-plan,
+  .section-grid-observe,
+  .section-grid-record {
     grid-template-columns: 1fr;
   }
 }
@@ -484,7 +608,8 @@ select {
 
   .sky-topbar,
   .stage-head,
-  .panel-head {
+  .panel-head,
+  .section-heading {
     flex-direction: column;
   }
 
@@ -512,5 +637,9 @@ select {
 
   .timeline-axis {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .workflow-nav {
+    top: 8px;
   }
 }
