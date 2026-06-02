@@ -1,7 +1,7 @@
 const presetLocations = {
-  dartmoor: { name: "Dartmoor, UK", latitude: 50.57, longitude: -3.92 },
-  sedona: { name: "Sedona, Arizona", latitude: 34.8697, longitude: -111.761 },
-  lofoten: { name: "Lofoten, Norway", latitude: 68.154, longitude: 13.611 }
+  dartmoor: { name: "Dartmoor, UK", latitude: 50.57, longitude: -3.92, timezone: "Europe/London" },
+  sedona: { name: "Sedona, Arizona", latitude: 34.8697, longitude: -111.761, timezone: "America/Phoenix" },
+  lofoten: { name: "Lofoten, Norway", latitude: 68.154, longitude: 13.611, timezone: "Europe/Oslo" }
 };
 
 const objectCatalog = [
@@ -225,6 +225,9 @@ function stateToUrl() {
   params.set("loc", location.name);
   params.set("lat", location.latitude.toFixed(4));
   params.set("lon", location.longitude.toFixed(4));
+  if (location.timezone) {
+    params.set("tz", location.timezone);
+  }
   params.set("obj", state.selectedName || bestTargetForTonight(location).name);
   if (state.hoursOffset !== 0) {
     params.set("hours", String(state.hoursOffset));
@@ -251,6 +254,7 @@ function applyUrlState() {
   const lat = Number(params.get("lat"));
   const lon = Number(params.get("lon"));
   const loc = params.get("loc");
+  const timezone = params.get("tz");
   const obj = params.get("obj");
   const hours = Number(params.get("hours"));
 
@@ -258,7 +262,8 @@ function applyUrlState() {
     state.activeLocation = {
       name: loc,
       latitude: lat,
-      longitude: lon
+      longitude: lon,
+      timezone: timezone || undefined
     };
   }
 
@@ -277,6 +282,29 @@ function applyUrlState() {
 
 function targetDate() {
   return new Date(Date.now() + state.hoursOffset * 3600000);
+}
+
+async function fetchTimezoneForCoordinates(latitude, longitude) {
+  const params = new URLSearchParams({
+    latitude: String(latitude),
+    longitude: String(longitude),
+    current: "temperature_2m",
+    timezone: "auto",
+    forecast_days: "1"
+  });
+  const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
+
+  if (!response.ok) {
+    throw new Error("Timezone lookup failed.");
+  }
+
+  const payload = await response.json();
+
+  if (!payload.timezone) {
+    throw new Error("Timezone lookup failed.");
+  }
+
+  return payload.timezone;
 }
 
 function coordinatesLabel(latitude, longitude) {
@@ -303,17 +331,20 @@ async function reverseGeocode(latitude, longitude) {
   const gps = coordinatesLabel(latitude, longitude);
 
   if (!match) {
+    const timezone = await fetchTimezoneForCoordinates(latitude, longitude).catch(() => undefined);
     return {
       name: `Your area (${gps})`,
       latitude,
-      longitude
+      longitude,
+      timezone
     };
   }
 
   return {
     name: [match.name, match.admin1, match.country].filter(Boolean).join(", "),
     latitude,
-    longitude
+    longitude,
+    timezone: match.timezone || await fetchTimezoneForCoordinates(latitude, longitude).catch(() => undefined)
   };
 }
 
@@ -340,7 +371,8 @@ async function fetchLocationBySearch(query) {
   return {
     name: [match.name, match.admin1, match.country].filter(Boolean).join(", "),
     latitude: match.latitude,
-    longitude: match.longitude
+    longitude: match.longitude,
+    timezone: match.timezone || await fetchTimezoneForCoordinates(match.latitude, match.longitude).catch(() => undefined)
   };
 }
 
@@ -448,8 +480,31 @@ function rankObjects(location, date) {
     .sort((a, b) => b.score - a.score);
 }
 
-function formatClock(date) {
-  return date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+function formatInLocationTime(date, options, location = currentLocation()) {
+  if (!location?.timezone) {
+    return new Intl.DateTimeFormat("en-GB", options).format(date);
+  }
+
+  return new Intl.DateTimeFormat("en-GB", { ...options, timeZone: location.timezone }).format(date);
+}
+
+function formatClock(date, location = currentLocation()) {
+  return formatInLocationTime(date, { hour: "2-digit", minute: "2-digit" }, location);
+}
+
+function formatStageTime(date, location = currentLocation()) {
+  return formatInLocationTime(
+    date,
+    {
+      hour: "2-digit",
+      minute: "2-digit",
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      timeZoneName: "short"
+    },
+    location
+  );
 }
 
 function buildTonightSuggestion(location) {
@@ -490,10 +545,10 @@ function buildTonightSuggestion(location) {
     bestTargetName: bestWindow.best.name,
     cards: [
       ["Tonight suggestion", suggestion, `${bestWindow.best.name} looks strongest for the selected location.`],
-      ["Best view time", formatClock(bestWindow.date), `${bestWindow.best.type} peaks near ${Math.round(bestWindow.best.altitude)}° altitude.`],
+      ["Best view time", formatClock(bestWindow.date, location), `${bestWindow.best.type} peaks near ${Math.round(bestWindow.best.altitude)}° altitude.`],
       ["Best target tonight", topNow.name, `${topNow.type} reaches about ${Math.round(topNow.altitude)}° in the dark-sky window.`]
     ],
-    note: `${location.name} is most rewarding near ${formatClock(bestWindow.date)} when ${bestWindow.best.name} rises into its best placement.`
+    note: `${location.name} is most rewarding near ${formatClock(bestWindow.date, location)} when ${bestWindow.best.name} rises into its best placement.`
   };
 }
 
@@ -532,7 +587,7 @@ function buildSelectedTimeline(location, object) {
     const date = new Date(now.getTime() + index * 2 * 3600000);
     const coords = astro.altAz(date, location.latitude, location.longitude, object.ra, object.dec);
     return {
-      label: formatClock(date),
+      label: formatClock(date, location),
       altitude: Math.round(coords.altitude),
       visible: coords.altitude > 0
     };
@@ -661,7 +716,7 @@ function drawSky() {
   cardinals.forEach(([label, x, y]) => ctx.fillText(label, x, y));
 
   els.stageTitle.textContent = `Sky above ${location.name}`;
-  els.stageTime.textContent = date.toLocaleString("en-GB", { hour: "2-digit", minute: "2-digit", weekday: "short", month: "short", day: "numeric" });
+  els.stageTime.textContent = formatStageTime(date, location);
   els.stageCoords.textContent = coordinatesLabel(location.latitude, location.longitude);
   els.canvasFooter.textContent = `Showing ${ranked.length} objects above the horizon. Toggle labels, constellations, or atmosphere to simplify the view.`;
 
@@ -807,6 +862,9 @@ function populateOptions() {
 }
 
 async function applyLocation(location, statusText) {
+  if (!location.timezone) {
+    location.timezone = await fetchTimezoneForCoordinates(location.latitude, location.longitude).catch(() => undefined);
+  }
   state.activeLocation = location;
   populateOptions();
   const chosen = state.selectedName ? objectByName(state.selectedName).name : bestTargetForTonight(location).name;
@@ -941,4 +999,13 @@ els.toggles.forEach((button) => {
     button.classList.toggle("is-active", state.showAtmosphere);
   }
 });
-drawSky();
+
+(async () => {
+  if (!state.activeLocation.timezone) {
+    state.activeLocation.timezone = await fetchTimezoneForCoordinates(
+      state.activeLocation.latitude,
+      state.activeLocation.longitude
+    ).catch(() => undefined);
+  }
+  drawSky();
+})();
