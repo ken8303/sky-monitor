@@ -23,6 +23,38 @@ const objectCatalog = [
   { name: "Omega Centauri", type: "Globular cluster", ra: 13.447, dec: -47.479, mag: 3.7, note: "Spectacular southern globular cluster, best from lower latitudes." }
 ];
 
+const seasonalPacks = {
+  spring: {
+    title: "Spring sky pack",
+    note: "Lean into galaxies, globulars, and bright guide stars that hold altitude well through the middle of the night.",
+    objects: ["Arcturus", "Omega Centauri", "Polaris", "Ring Nebula", "Vega"]
+  },
+  summer: {
+    title: "Summer sky pack",
+    note: "This is the Milky Way season, with bright triangle stars and rich nebulae peaking after twilight clears.",
+    objects: ["Vega", "Deneb", "Altair", "Lagoon Nebula", "North America Nebula", "Ring Nebula"]
+  },
+  autumn: {
+    title: "Autumn sky pack",
+    note: "Autumn rewards patient dark-sky observing with wide galaxies and clusters that benefit from lower moonlight.",
+    objects: ["Andromeda Galaxy", "Triangulum Galaxy", "Pleiades", "Altair", "Deneb"]
+  },
+  winter: {
+    title: "Winter sky pack",
+    note: "Winter brings bright showpiece stars and nebulae that work well even when the seeing is only fair.",
+    objects: ["Orion Nebula", "Betelgeuse", "Rigel", "Sirius", "Pleiades", "Aldebaran"]
+  }
+};
+
+const moonSensitivityByType = {
+  Star: 2,
+  Galaxy: 18,
+  Nebula: 16,
+  "Planetary nebula": 11,
+  "Globular cluster": 9,
+  "Open cluster": 7
+};
+
 const objectPhotos = {
   "Andromeda Galaxy": {
     src: "https://commons.wikimedia.org/wiki/Special:Redirect/file/The%20Andromeda%20Galaxy.jpg",
@@ -125,6 +157,10 @@ const els = {
   targetTimeline: document.querySelector("#target-timeline"),
   timelineAxis: document.querySelector("#timeline-axis"),
   timelineNote: document.querySelector("#timeline-note"),
+  astronomyGrid: document.querySelector("#astronomy-grid"),
+  astronomyNote: document.querySelector("#astronomy-note"),
+  seasonalList: document.querySelector("#seasonal-list"),
+  seasonalNote: document.querySelector("#seasonal-note"),
   visibleList: document.querySelector("#visible-list")
 };
 
@@ -161,6 +197,15 @@ const astro = (() => {
     return m + c + p + PI;
   }
 
+  function sunCoords(d) {
+    const m = solarMeanAnomaly(d);
+    const l = eclipticLongitude(m);
+    return {
+      ra: rightAscension(l, 0),
+      dec: declination(l, 0)
+    };
+  }
+
   function rightAscension(l, b) {
     return Math.atan2(Math.sin(l) * Math.cos(e) - Math.tan(b) * Math.sin(e), Math.cos(l));
   }
@@ -192,23 +237,82 @@ const astro = (() => {
     };
   }
 
-  function sunAltitude(date, latitude, longitude) {
-    const d = toDays(date);
-    const m = solarMeanAnomaly(d);
-    const l = eclipticLongitude(m);
-    const ra = rightAscension(l, 0);
-    const dec = declination(l, 0);
+  function altAzFromRadians(date, latitude, longitude, ra, dec) {
     const lst = siderealDegrees(date, longitude) * rad;
     const lat = latitude * rad;
     const hourAngle = lst - ra;
 
-    return Math.asin(
+    const altitude = Math.asin(
       Math.sin(lat) * Math.sin(dec) +
       Math.cos(lat) * Math.cos(dec) * Math.cos(hourAngle)
+    );
+
+    const azimuth = Math.atan2(
+      Math.sin(hourAngle),
+      Math.cos(hourAngle) * Math.sin(lat) - Math.tan(dec) * Math.cos(lat)
+    );
+
+    return {
+      altitude: altitude / rad,
+      azimuth: (azimuth / rad + 180 + 360) % 360
+    };
+  }
+
+  function moonCoords(d) {
+    const l = rad * (218.316 + 13.176396 * d);
+    const m = rad * (134.963 + 13.064993 * d);
+    const f = rad * (93.272 + 13.22935 * d);
+    const lon = l + rad * 6.289 * Math.sin(m);
+    const lat = rad * 5.128 * Math.sin(f);
+    const dist = 385001 - 20905 * Math.cos(m);
+    return {
+      ra: rightAscension(lon, lat),
+      dec: declination(lon, lat),
+      dist
+    };
+  }
+
+  function moonPosition(date, latitude, longitude) {
+    const moon = moonCoords(toDays(date));
+    const coords = altAzFromRadians(date, latitude, longitude, moon.ra, moon.dec);
+    return { ...coords, ra: moon.ra, dec: moon.dec, distance: moon.dist };
+  }
+
+  function angularSeparation(raA, decA, raB, decB) {
+    return Math.acos(
+      Math.sin(decA) * Math.sin(decB) +
+      Math.cos(decA) * Math.cos(decB) * Math.cos(raA - raB)
     ) / rad;
   }
 
-  return { altAz, sunAltitude };
+  function moonIllumination(date) {
+    const d = toDays(date);
+    const sun = sunCoords(d);
+    const moon = moonCoords(d);
+    const sdist = 149598000;
+    const phi = Math.acos(
+      Math.sin(sun.dec) * Math.sin(moon.dec) +
+      Math.cos(sun.dec) * Math.cos(moon.dec) * Math.cos(sun.ra - moon.ra)
+    );
+    const inc = Math.atan2(sdist * Math.sin(phi), moon.dist - sdist * Math.cos(phi));
+    const angle = Math.atan2(
+      Math.cos(sun.dec) * Math.sin(sun.ra - moon.ra),
+      Math.sin(sun.dec) * Math.cos(moon.dec) - Math.cos(sun.dec) * Math.sin(moon.dec) * Math.cos(sun.ra - moon.ra)
+    );
+
+    return {
+      fraction: (1 + Math.cos(inc)) / 2,
+      phase: 0.5 + 0.5 * inc * (angle < 0 ? -1 : 1) / PI,
+      angle
+    };
+  }
+
+  function sunAltitude(date, latitude, longitude) {
+    const sun = sunCoords(toDays(date));
+    return altAzFromRadians(date, latitude, longitude, sun.ra, sun.dec).altitude;
+  }
+
+  return { altAz, sunAltitude, moonPosition, moonIllumination, angularSeparation };
 })();
 
 function clamp(value, min, max) {
@@ -469,12 +573,15 @@ function drawSelectedHighlight(point) {
 }
 
 function rankObjects(location, date) {
+  const moonState = describeMoonImpact(location, date);
   return objectCatalog
     .map((object) => {
       const coords = astro.altAz(date, location.latitude, location.longitude, object.ra, object.dec);
       const base = coords.altitude * 1.1 - Math.max(object.mag || 4, 0) * 3;
-      const score = Math.round(clamp(base + 45, 0, 100));
-      return { ...object, altitude: coords.altitude, azimuth: coords.azimuth, score };
+      const seasonBoost = seasonalBonusForObject(object, location, date);
+      const moonPenalty = moonPenaltyForObject(object, moonState);
+      const score = Math.round(clamp(base + 45 + seasonBoost - moonPenalty, 0, 100));
+      return { ...object, altitude: coords.altitude, azimuth: coords.azimuth, score, seasonBoost, moonPenalty };
     })
     .filter((object) => object.altitude > 0)
     .sort((a, b) => b.score - a.score);
@@ -507,8 +614,240 @@ function formatStageTime(date, location = currentLocation()) {
   );
 }
 
+function localMonthIndex(date, location = currentLocation()) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    month: "numeric",
+    timeZone: location?.timezone
+  }).formatToParts(date);
+  const month = Number(parts.find((part) => part.type === "month")?.value || "1");
+  return month - 1;
+}
+
+function seasonForLocation(date, location) {
+  const month = localMonthIndex(date, location);
+  const shifted = location.latitude < 0 ? (month + 6) % 12 : month;
+  if (shifted >= 2 && shifted <= 4) {
+    return "spring";
+  }
+  if (shifted >= 5 && shifted <= 7) {
+    return "summer";
+  }
+  if (shifted >= 8 && shifted <= 10) {
+    return "autumn";
+  }
+  return "winter";
+}
+
+function twilightBandForAltitude(altitude) {
+  if (altitude <= -18) {
+    return "astronomical";
+  }
+  if (altitude <= -12) {
+    return "nautical";
+  }
+  if (altitude <= -6) {
+    return "civil";
+  }
+  return "daylight";
+}
+
+function twilightBandLabel(band) {
+  return {
+    daylight: "Civil light",
+    civil: "Civil twilight",
+    nautical: "Nautical twilight",
+    astronomical: "Astronomical dark"
+  }[band];
+}
+
+function moonPhaseLabel(phase) {
+  if (phase < 0.03 || phase > 0.97) {
+    return "New Moon";
+  }
+  if (phase < 0.22) {
+    return "Waxing Crescent";
+  }
+  if (phase < 0.28) {
+    return "First Quarter";
+  }
+  if (phase < 0.47) {
+    return "Waxing Gibbous";
+  }
+  if (phase < 0.53) {
+    return "Full Moon";
+  }
+  if (phase < 0.72) {
+    return "Waning Gibbous";
+  }
+  if (phase < 0.78) {
+    return "Last Quarter";
+  }
+  return "Waning Crescent";
+}
+
+function findThresholdCrossings(getValue, threshold, startDate, endDate, stepMinutes = 20) {
+  const stepMs = stepMinutes * 60000;
+  const crossings = [];
+  let previousDate = startDate;
+  let previousValue = getValue(previousDate) - threshold;
+
+  for (let time = startDate.getTime() + stepMs; time <= endDate.getTime(); time += stepMs) {
+    const nextDate = new Date(time);
+    const nextValue = getValue(nextDate) - threshold;
+
+    if (previousValue === 0 || previousValue * nextValue <= 0) {
+      let low = previousDate;
+      let high = nextDate;
+      let lowValue = previousValue;
+      let highValue = nextValue;
+
+      for (let index = 0; index < 16; index += 1) {
+        const mid = new Date((low.getTime() + high.getTime()) / 2);
+        const midValue = getValue(mid) - threshold;
+        if (Math.abs(midValue) < 0.0001) {
+          low = mid;
+          high = mid;
+          break;
+        }
+        if (lowValue * midValue <= 0) {
+          high = mid;
+          highValue = midValue;
+        } else {
+          low = mid;
+          lowValue = midValue;
+        }
+      }
+
+      const crossingDate = new Date((low.getTime() + high.getTime()) / 2);
+      crossings.push({
+        date: crossingDate,
+        direction: previousValue < nextValue ? "rising" : "setting"
+      });
+    }
+
+    previousDate = nextDate;
+    previousValue = nextValue;
+  }
+
+  return crossings;
+}
+
+function findNextCrossing(crossings, direction, afterDate) {
+  return crossings.find((entry) => entry.direction === direction && entry.date >= afterDate) || null;
+}
+
+function describeMoonImpact(location, date = new Date()) {
+  const moon = astro.moonPosition(date, location.latitude, location.longitude);
+  const illumination = astro.moonIllumination(date);
+  const fraction = Math.round(illumination.fraction * 100);
+  const phase = moonPhaseLabel(illumination.phase);
+
+  let summary = "Low moon impact";
+  if (moon.altitude > 0 && fraction >= 70) {
+    summary = "Bright moonlight";
+  } else if (moon.altitude > 0 && fraction >= 35) {
+    summary = "Moderate moonlight";
+  } else if (moon.altitude > 0) {
+    summary = "Moon up, but gentle";
+  } else if (fraction >= 70) {
+    summary = "Bright phase, below horizon";
+  }
+
+  return {
+    moon,
+    illumination,
+    phase,
+    fraction,
+    summary
+  };
+}
+
+function buildAstronomySummary(location) {
+  const now = new Date();
+  const end = new Date(now.getTime() + 36 * 3600000);
+  const sunAt = (date) => astro.sunAltitude(date, location.latitude, location.longitude);
+  const moonAt = (date) => astro.moonPosition(date, location.latitude, location.longitude).altitude;
+  const moonState = describeMoonImpact(location, now);
+  const sunNow = sunAt(now);
+  const moonNow = moonState.moon.altitude;
+
+  const civilCrossings = findThresholdCrossings(sunAt, -6, now, end);
+  const nauticalCrossings = findThresholdCrossings(sunAt, -12, now, end);
+  const astronomicalCrossings = findThresholdCrossings(sunAt, -18, now, end);
+  const moonCrossings = findThresholdCrossings(moonAt, 0, now, end);
+
+  const civilEnd = findNextCrossing(civilCrossings, "setting", now);
+  const nauticalEnd = findNextCrossing(nauticalCrossings, "setting", now);
+  const astronomicalEnd = findNextCrossing(astronomicalCrossings, "setting", now);
+  const astronomicalStart = findNextCrossing(astronomicalCrossings, "rising", astronomicalEnd?.date || now);
+  const moonrise = findNextCrossing(moonCrossings, "rising", now);
+  const moonset = findNextCrossing(moonCrossings, "setting", now);
+
+  const darknessWindow = astronomicalEnd && astronomicalStart
+    ? `${formatClock(astronomicalEnd.date, location)}-${formatClock(astronomicalStart.date, location)}`
+    : sunNow <= -18
+      ? `Dark now until ${formatClock(astronomicalStart?.date || end, location)}`
+      : "No true astronomical dark";
+
+  const moonTiming = moonrise && moonset
+    ? `${moonrise.date < moonset.date
+      ? `Rises ${formatClock(moonrise.date, location)} · sets ${formatClock(moonset.date, location)}`
+      : `Sets ${formatClock(moonset.date, location)} · rises ${formatClock(moonrise.date, location)}`}`
+    : moonNow > 0
+      ? moonset ? `Up now · sets ${formatClock(moonset.date, location)}` : "Up through the sampled night"
+      : moonrise ? `Down now · rises ${formatClock(moonrise.date, location)}` : "Below horizon through the sampled night";
+
+  const twilightLine = astronomicalEnd
+    ? `Civil ends ${formatClock(civilEnd?.date || astronomicalEnd.date, location)}, nautical ends ${formatClock(nauticalEnd?.date || astronomicalEnd.date, location)}, astronomical dark begins ${formatClock(astronomicalEnd.date, location)}.`
+    : civilEnd || nauticalEnd
+      ? `Twilight deepens through ${formatClock(civilEnd?.date || nauticalEnd?.date, location)} but never reaches full astronomical dark in the sampled window.`
+      : "The sampled window stays in daylight or twilight without a clean dark-sky handoff.";
+
+  const note = moonState.summary === "Bright moonlight"
+    ? `${twilightLine} The moon is bright and above the horizon, so galaxies and faint nebulae will improve after it sets or once your target moves farther from it.`
+    : `${twilightLine} ${moonTiming}.`;
+
+  return {
+    cards: [
+      ["Moon phase", moonState.phase, `${moonState.fraction}% illuminated`],
+      ["Moon impact", moonState.summary, moonTiming],
+      ["Dark window", darknessWindow, twilightLine],
+      ["Twilight now", twilightBandLabel(twilightBandForAltitude(sunNow)), `Sun altitude ${Math.round(sunNow)}°`]
+    ],
+    note
+  };
+}
+
+function seasonalPackForLocation(location, date = new Date()) {
+  const season = seasonForLocation(date, location);
+  return { season, ...seasonalPacks[season] };
+}
+
+function moonPenaltyForObject(object, moonState) {
+  const sensitivity = moonSensitivityByType[object.type] ?? 8;
+  if (moonState.moon.altitude <= 0 || moonState.fraction < 10) {
+    return 0;
+  }
+  const objectRa = object.ra * 15 * Math.PI / 180;
+  const objectDec = object.dec * Math.PI / 180;
+  const separation = astro.angularSeparation(objectRa, objectDec, moonState.moon.ra, moonState.moon.dec);
+  const proximity = clamp(1.25 - separation / 120, 0.3, 1.2);
+  return moonState.illumination.fraction * sensitivity * proximity;
+}
+
+function seasonalBonusForObject(object, location, date) {
+  const pack = seasonalPackForLocation(location, date);
+  const index = pack.objects.indexOf(object.name);
+  if (index === -1) {
+    return 0;
+  }
+  return Math.max(3, 10 - index);
+}
+
 function buildTonightSuggestion(location) {
   const now = new Date();
+  const astronomy = buildAstronomySummary(location);
+  const moonState = describeMoonImpact(location, now);
   const samples = Array.from({ length: 13 }, (_, index) => {
     const sampleDate = new Date(now.getTime() + index * 3600000);
     const sunAltitude = astro.sunAltitude(sampleDate, location.latitude, location.longitude);
@@ -546,9 +885,10 @@ function buildTonightSuggestion(location) {
     cards: [
       ["Tonight suggestion", suggestion, `${bestWindow.best.name} looks strongest for the selected location.`],
       ["Best view time", formatClock(bestWindow.date, location), `${bestWindow.best.type} peaks near ${Math.round(bestWindow.best.altitude)}° altitude.`],
-      ["Best target tonight", topNow.name, `${topNow.type} reaches about ${Math.round(topNow.altitude)}° in the dark-sky window.`]
+      ["Best target tonight", topNow.name, `${topNow.type} reaches about ${Math.round(topNow.altitude)}° in the dark-sky window.`],
+      ["Moon check", moonState.summary, astronomy.cards[2][1]]
     ],
-    note: `${location.name} is most rewarding near ${formatClock(bestWindow.date, location)} when ${bestWindow.best.name} rises into its best placement.`
+    note: `${location.name} is most rewarding near ${formatClock(bestWindow.date, location)} when ${bestWindow.best.name} rises into its best placement. ${moonState.phase} moon conditions should be part of your target choice.`
   };
 }
 
@@ -583,13 +923,16 @@ function eligibleNightObjects(location) {
 
 function buildSelectedTimeline(location, object) {
   const now = new Date();
-  const samples = Array.from({ length: 6 }, (_, index) => {
+  const samples = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(now.getTime() + index * 2 * 3600000);
     const coords = astro.altAz(date, location.latitude, location.longitude, object.ra, object.dec);
+    const sunAltitude = astro.sunAltitude(date, location.latitude, location.longitude);
     return {
       label: formatClock(date, location),
       altitude: Math.round(coords.altitude),
-      visible: coords.altitude > 0
+      visible: coords.altitude > 0,
+      sunAltitude,
+      twilightBand: twilightBandForAltitude(sunAltitude)
     };
   });
 
@@ -604,6 +947,40 @@ function buildSelectedTimeline(location, object) {
     note: peak
       ? `${object.name} reaches its strongest placement near ${peak.label} at about ${peak.altitude}° altitude.`
       : `${object.name} stays below the horizon for the next several hours at this location.`
+  };
+}
+
+function buildSeasonalTargets(location) {
+  const pack = seasonalPackForLocation(location, new Date());
+  const now = new Date();
+  const rankedMap = new Map();
+
+  Array.from({ length: 13 }, (_, index) => new Date(now.getTime() + index * 3600000)).forEach((sampleDate) => {
+    if (astro.sunAltitude(sampleDate, location.latitude, location.longitude) > -6) {
+      return;
+    }
+    rankObjects(location, sampleDate)
+      .filter((object) => pack.objects.includes(object.name))
+      .forEach((object) => {
+        const existing = rankedMap.get(object.name);
+        if (!existing || object.score > existing.score) {
+          rankedMap.set(object.name, {
+            ...object,
+            bestLabel: formatClock(sampleDate, location)
+          });
+        }
+      });
+  });
+
+  const items = pack.objects
+    .map((name) => rankedMap.get(name))
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4);
+
+  return {
+    ...pack,
+    items
   };
 }
 
@@ -721,7 +1098,9 @@ function drawSky() {
   els.canvasFooter.textContent = `Showing ${ranked.length} objects above the horizon. Toggle labels, constellations, or atmosphere to simplify the view.`;
 
   renderTonightSuggestion(location);
+  renderAstronomySummary(location);
   renderInfo(selected, selectedPoint, ranked, location);
+  renderSeasonalPack(location);
   renderVisibleList(ranked);
   updateUrlState();
 }
@@ -742,14 +1121,33 @@ function renderTonightSuggestion(location) {
   els.tonightNote.textContent = tonight.note;
 }
 
+function renderAstronomySummary(location) {
+  const astronomy = buildAstronomySummary(location);
+  els.astronomyGrid.innerHTML = astronomy.cards
+    .map(
+      ([label, value, detail]) => `
+        <div class="astronomy-card">
+          <span>${label}</span>
+          <strong>${value}</strong>
+          <small>${detail}</small>
+        </div>
+      `
+    )
+    .join("");
+  els.astronomyNote.textContent = astronomy.note;
+}
+
 function renderInfo(selected, selectedPoint, ranked, location) {
   const visible = ranked.find((item) => item.name === selected.name);
+  const pack = seasonalPackForLocation(location, new Date());
   els.objectTitle.textContent = selected.name;
   const infoItems = [
     ["Type", selected.type],
     ["Altitude", visible ? `${Math.round(visible.altitude)}°` : "Below horizon"],
     ["Direction", visible ? `${Math.round(visible.azimuth)}° az` : "Not visible now"],
-    ["Session score", visible ? `${visible.score}/100` : "Standby"]
+    ["Session score", visible ? `${visible.score}/100` : "Standby"],
+    ["Season fit", pack.objects.includes(selected.name) ? `Featured in ${pack.season}` : `Secondary in ${pack.season}`],
+    ["Moon impact", visible ? `${Math.round(visible.moonPenalty)} penalty` : "Check after rise"]
   ];
   els.objectInfo.innerHTML = infoItems
     .map(
@@ -803,6 +1201,12 @@ function renderSelectedTimeline(location, object) {
     return { x, y };
   });
   const points = pointPairs.map((point) => `${point.x},${point.y}`).join(" ");
+  const bandColors = {
+    daylight: "rgba(255, 191, 120, 0.12)",
+    civil: "rgba(123, 173, 255, 0.1)",
+    nautical: "rgba(77, 111, 214, 0.16)",
+    astronomical: "rgba(18, 46, 82, 0.34)"
+  };
   const grid = [0.25, 0.5, 0.75]
     .map((value) => {
       const y = height - padding - value * (height - padding * 2);
@@ -813,9 +1217,17 @@ function renderSelectedTimeline(location, object) {
       `;
     })
     .join("");
+  const bandRects = timeline.samples.slice(0, -1).map((sample, index) => {
+    const next = pointPairs[index + 1];
+    const current = pointPairs[index];
+    return `
+      <rect x="${current.x}" y="${padding}" width="${Math.max(next.x - current.x, 2)}" height="${height - padding * 2}" fill="${bandColors[sample.twilightBand]}" />
+    `;
+  }).join("");
 
   els.targetTimeline.innerHTML = `
     <rect x="0" y="0" width="${width}" height="${height}" fill="rgba(0,0,0,0)" />
+    ${bandRects}
     ${grid}
     <polyline fill="none" stroke="rgba(122,240,212,0.28)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" points="${points}" />
     <polyline fill="none" stroke="#7af0d4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${points}" />
@@ -823,10 +1235,35 @@ function renderSelectedTimeline(location, object) {
       return `<circle cx="${point.x}" cy="${point.y}" r="4.5" fill="#9ff3ff" />`;
     }).join("")}
   `;
+  const compactTimeline = (window.innerWidth || 1200) < 720;
+  els.timelineAxis.style.gridTemplateColumns = compactTimeline
+    ? "repeat(3, minmax(0, 1fr))"
+    : `repeat(${timeline.samples.length}, minmax(0, 1fr))`;
   els.timelineAxis.innerHTML = timeline.samples
-    .map((sample) => `<span>${sample.label}<br>${sample.visible ? `${sample.altitude}°` : "Below"}</span>`)
+    .map((sample) => `<span>${sample.label}<br>${sample.visible ? `${sample.altitude}°` : "Below"}<br><small>${twilightBandLabel(sample.twilightBand)}</small></span>`)
     .join("");
-  els.timelineNote.textContent = timeline.note;
+  els.timelineNote.innerHTML = `${timeline.note} <span class="twilight-chip">${twilightBandLabel(timeline.samples[Math.floor(timeline.samples.length / 2)].twilightBand)}</span>`;
+}
+
+function renderSeasonalPack(location) {
+  const pack = buildSeasonalTargets(location);
+  els.seasonalList.innerHTML = pack.items.length
+    ? pack.items.map((item) => `
+        <div class="seasonal-card">
+          <span class="season-tag">${pack.season}</span>
+          <strong>${item.name}</strong>
+          <small>${item.type} · peaks near ${item.bestLabel}</small>
+          <div class="meta-line">Score ${item.score}/100 · moon penalty ${Math.round(item.moonPenalty)}</div>
+        </div>
+      `).join("")
+    : `
+      <div class="seasonal-card">
+        <span class="season-tag">${pack.season}</span>
+        <strong>No strong seasonal targets yet</strong>
+        <small>Twilight or low altitude is keeping the main seasonal pack from climbing into a strong window.</small>
+      </div>
+    `;
+  els.seasonalNote.textContent = `${pack.title}. ${pack.note}`;
 }
 
 function renderVisibleList(ranked) {
@@ -836,7 +1273,7 @@ function renderVisibleList(ranked) {
         <button type="button" class="visible-row" data-object="${item.name}">
           <div>
             <strong>${item.name}</strong>
-            <small>${item.type} · ${Math.round(item.altitude)}° high</small>
+            <small>${item.type} · ${Math.round(item.altitude)}° high · season +${item.seasonBoost} · moon -${Math.round(item.moonPenalty)}</small>
           </div>
           <span class="visible-score">${item.score}</span>
         </button>

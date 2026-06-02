@@ -265,13 +265,15 @@ select {
 }
 
 .info-grid,
-.visible-list {
+.visible-list,
+.seasonal-list {
   margin-top: 18px;
   display: grid;
   gap: 12px;
 }
 
-.tonight-grid {
+.tonight-grid,
+.astronomy-grid {
   margin-top: 18px;
   display: grid;
   gap: 12px;
@@ -346,7 +348,6 @@ select {
 .timeline-axis {
   margin-top: 12px;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
   gap: 12px;
   color: var(--muted);
   font-size: 0.82rem;
@@ -356,9 +357,18 @@ select {
   text-align: center;
 }
 
+.timeline-axis small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
 .info-card,
 .visible-row,
-.tonight-card {
+.tonight-card,
+.seasonal-card,
+.astronomy-card {
   padding: 14px 16px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.04);
@@ -377,11 +387,32 @@ select {
   font-size: 1.16rem;
 }
 
+.astronomy-grid,
+.tonight-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.astronomy-card .meta-line,
+.seasonal-card .meta-line {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.astronomy-card strong,
+.seasonal-card strong,
 .info-card strong,
 .visible-row strong {
   display: block;
   margin-top: 6px;
   font-family: "Space Grotesk", sans-serif;
+}
+
+.astronomy-card span,
+.astronomy-card small,
+.seasonal-card span,
+.seasonal-card small {
+  color: var(--muted);
 }
 
 .visible-row {
@@ -394,6 +425,34 @@ select {
   grid-template-columns: 1fr auto;
   gap: 12px;
   align-items: center;
+}
+
+.seasonal-card {
+  display: grid;
+  gap: 6px;
+}
+
+.season-tag,
+.twilight-chip {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.season-tag {
+  color: #062133;
+  background: linear-gradient(135deg, var(--accent), #b7f6ff);
+}
+
+.twilight-chip {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .visible-row:hover,
@@ -443,6 +502,11 @@ select {
   }
 
   .location-row {
+    grid-template-columns: 1fr;
+  }
+
+  .tonight-grid,
+  .astronomy-grid {
     grid-template-columns: 1fr;
   }
 
