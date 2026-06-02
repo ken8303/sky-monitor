@@ -202,6 +202,9 @@ textarea {
   position: sticky;
   top: 12px;
   z-index: 3;
+  background:
+    linear-gradient(180deg, rgba(8, 22, 35, 0.86), rgba(8, 18, 30, 0.94));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
 }
 
 .workflow-nav a {
@@ -211,10 +214,19 @@ textarea {
   color: var(--text);
   text-decoration: none;
   background: rgba(255, 255, 255, 0.04);
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.workflow-nav a:hover,
+.workflow-nav a:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(122, 240, 212, 0.26);
+  background: rgba(122, 240, 212, 0.08);
 }
 
 .workspace-section {
   margin-top: 28px;
+  padding: 4px 0 0;
 }
 
 .section-heading {
@@ -244,19 +256,64 @@ textarea {
 }
 
 .section-grid-plan {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1.28fr 0.72fr;
+  grid-template-areas:
+    "hero context"
+    "route shortlist"
+    "supportA supportB";
 }
 
 .section-grid-observe {
-  grid-template-columns: 1.38fr 0.82fr;
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.82fr);
+  align-items: start;
 }
 
 .section-grid-record {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
+  align-items: start;
 }
 
 .sky-stage {
   padding: 22px;
+}
+
+.observe-primary,
+.record-primary,
+.record-secondary,
+.plan-hero,
+.plan-context,
+.plan-route,
+.plan-shortlist,
+.plan-support {
+  min-width: 0;
+}
+
+.plan-support-a {
+  grid-area: supportA;
+}
+
+.plan-support-b {
+  grid-area: supportB;
+}
+
+.plan-hero {
+  grid-area: hero;
+  padding: 26px;
+  background:
+    radial-gradient(circle at top left, rgba(122, 240, 212, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(7, 25, 38, 0.9), rgba(8, 18, 30, 0.98));
+}
+
+.plan-context {
+  grid-area: context;
+}
+
+.plan-route {
+  grid-area: route;
+}
+
+.plan-shortlist {
+  grid-area: shortlist;
 }
 
 .stage-head,
@@ -314,6 +371,8 @@ textarea {
 .observe-stack {
   display: grid;
   gap: 20px;
+  position: sticky;
+  top: 92px;
 }
 
 .panel {
@@ -454,6 +513,16 @@ textarea {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.plan-hero .tonight-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.plan-hero .tonight-card {
+  min-height: 112px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
 .astronomy-card .meta-line,
 .seasonal-card .meta-line {
   margin-top: 8px;
@@ -577,6 +646,13 @@ textarea {
   flex-wrap: wrap;
 }
 
+.record-primary .record-list,
+.record-secondary .record-list {
+  max-height: 360px;
+  overflow: auto;
+  padding-right: 6px;
+}
+
 .visible-row:hover,
 .visible-row:focus-visible {
   transform: translateY(-1px);
@@ -598,6 +674,20 @@ textarea {
   .section-grid-observe,
   .section-grid-record {
     grid-template-columns: 1fr;
+  }
+
+  .section-grid-plan {
+    grid-template-areas:
+      "hero"
+      "context"
+      "route"
+      "shortlist"
+      "supportA"
+      "supportB";
+  }
+
+  .observe-stack {
+    position: static;
   }
 }
 
@@ -641,5 +731,9 @@ textarea {
 
   .workflow-nav {
     top: 8px;
+  }
+
+  .plan-hero {
+    padding: 22px;
   }
 }

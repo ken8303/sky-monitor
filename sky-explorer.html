@@ -75,7 +75,7 @@
             <p class="section-copy">Use the night summary, shortlist, route, and watchouts to decide whether tonight is worth setting up for and what to observe first.</p>
           </div>
           <div class="section-grid section-grid-plan">
-            <article class="card panel tonight-panel">
+            <article class="card panel tonight-panel plan-hero">
               <div class="panel-head">
                 <div>
                   <p class="eyebrow">Tonight</p>
@@ -86,7 +86,7 @@
               <p class="panel-note" id="tonight-note"></p>
             </article>
 
-            <article class="card panel astronomy-panel">
+            <article class="card panel astronomy-panel plan-context">
               <div class="panel-head">
                 <div>
                   <p class="eyebrow">Moon & Twilight</p>
@@ -97,18 +97,7 @@
               <p class="panel-note" id="astronomy-note"></p>
             </article>
 
-            <article class="card panel seasonal-panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Seasonal Pack</p>
-                  <h3>Targets that suit this season</h3>
-                </div>
-              </div>
-              <div class="seasonal-list" id="seasonal-list"></div>
-              <p class="panel-note" id="seasonal-note"></p>
-            </article>
-
-            <article class="card panel route-panel">
+            <article class="card panel route-panel plan-route">
               <div class="panel-head">
                 <div>
                   <p class="eyebrow">Route</p>
@@ -119,7 +108,28 @@
               <p class="panel-note" id="route-note"></p>
             </article>
 
-            <article class="card panel alerts-panel">
+            <article class="card panel visible-panel plan-shortlist">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Shortlist</p>
+                  <h3>Highest-value targets</h3>
+                </div>
+              </div>
+              <div class="visible-list" id="visible-list"></div>
+            </article>
+
+            <article class="card panel seasonal-panel plan-support plan-support-a">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Seasonal Pack</p>
+                  <h3>Targets that suit this season</h3>
+                </div>
+              </div>
+              <div class="seasonal-list" id="seasonal-list"></div>
+              <p class="panel-note" id="seasonal-note"></p>
+            </article>
+
+            <article class="card panel alerts-panel plan-support plan-support-b">
               <div class="panel-head">
                 <div>
                   <p class="eyebrow">Alerts</p>
@@ -128,16 +138,6 @@
               </div>
               <div class="alerts-list" id="alerts-list"></div>
               <p class="panel-note" id="alerts-note"></p>
-            </article>
-
-            <article class="card panel visible-panel">
-              <div class="panel-head">
-                <div>
-                  <p class="eyebrow">Shortlist</p>
-                  <h3>Highest-value targets</h3>
-                </div>
-              </div>
-              <div class="visible-list" id="visible-list"></div>
             </article>
           </div>
         </section>
@@ -151,7 +151,7 @@
             <p class="section-copy">Keep the live sky, the selected object, and the altitude trend together so you can move from planning into actual observing without hunting through the page.</p>
           </div>
           <div class="section-grid section-grid-observe">
-            <article class="sky-stage card" id="sky-stage">
+            <article class="sky-stage card observe-primary" id="sky-stage">
               <div class="stage-head">
                 <div>
                   <p class="eyebrow">Live Sky</p>
@@ -169,7 +169,7 @@
             </article>
 
             <aside class="observe-stack" id="sky-sidebar">
-              <article class="card panel info-panel">
+              <article class="card panel info-panel observe-focus">
                 <div class="panel-head">
                   <div>
                     <p class="eyebrow">Selected Object</p>
@@ -181,7 +181,7 @@
                 <p class="panel-note" id="object-note"></p>
               </article>
 
-              <article class="card panel timeline-panel">
+              <article class="card panel timeline-panel observe-focus">
                 <div class="panel-head">
                   <div>
                     <p class="eyebrow">Target Timeline</p>
@@ -207,7 +207,7 @@
             <p class="section-copy">Capture a live observer note, keep a small history, and save the current plan so a good setup is easy to revisit later.</p>
           </div>
           <div class="section-grid section-grid-record">
-            <article class="card panel notes-panel">
+            <article class="card panel notes-panel record-primary">
               <div class="panel-head">
                 <div>
                   <p class="eyebrow">Notes</p>
@@ -223,7 +223,7 @@
               <div class="record-list" id="notes-list"></div>
             </article>
 
-            <article class="card panel plans-panel">
+            <article class="card panel plans-panel record-secondary">
               <div class="panel-head">
                 <div>
                   <p class="eyebrow">Saved Plans</p>
