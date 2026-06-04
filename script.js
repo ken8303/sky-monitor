@@ -179,17 +179,11 @@ const state = {
   liveSummary: null
 };
 
-const storageKeys = {
-  recentLocations: "sky-monitor-recent-locations"
-};
-
 const els = {
   locationQuery: document.querySelector("#location-query"),
   searchForm: document.querySelector("#search-form"),
   searchStatus: document.querySelector("#search-status"),
   deviceLocationButton: document.querySelector("#device-location-button"),
-  copyLinkButton: document.querySelector("#copy-link-button"),
-  recentLocations: document.querySelector("#recent-locations"),
   sourceNote: document.querySelector("#source-note"),
   statusStrip: document.querySelector("#status-strip"),
   heroEyebrow: document.querySelector("#hero-eyebrow"),
@@ -244,89 +238,6 @@ function toTitle(value) {
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
-}
-
-function loadStoredRecentLocations() {
-  try {
-    const raw = window.localStorage.getItem(storageKeys.recentLocations);
-    if (!raw) {
-      return [];
-    }
-
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed.filter(
-      (item) =>
-        item &&
-        typeof item.name === "string" &&
-        Number.isFinite(item.latitude) &&
-        Number.isFinite(item.longitude)
-    );
-  } catch (error) {
-    return [];
-  }
-}
-
-function saveStoredRecentLocations(locations) {
-  try {
-    window.localStorage.setItem(storageKeys.recentLocations, JSON.stringify(locations));
-  } catch (error) {
-    return;
-  }
-}
-
-function rememberLocation(location) {
-  if (!location?.name || !Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) {
-    return;
-  }
-
-  const nextLocations = [
-    {
-      name: location.name,
-      latitude: Number(location.latitude.toFixed(4)),
-      longitude: Number(location.longitude.toFixed(4))
-    },
-    ...loadStoredRecentLocations().filter(
-      (item) =>
-        item.name !== location.name ||
-        Math.abs(item.latitude - location.latitude) > 0.0001 ||
-        Math.abs(item.longitude - location.longitude) > 0.0001
-    )
-  ].slice(0, 5);
-
-  saveStoredRecentLocations(nextLocations);
-}
-
-function renderRecentLocations() {
-  if (!els.recentLocations) {
-    return;
-  }
-
-  const savedLocations = loadStoredRecentLocations();
-
-  if (!savedLocations.length) {
-    els.recentLocations.innerHTML = `<span class="recent-location-empty">Places you load will show up here.</span>`;
-    return;
-  }
-
-  els.recentLocations.innerHTML = savedLocations
-    .map(
-      (location) => `
-        <button
-          type="button"
-          class="recent-location-chip"
-          data-recent-location="${encodeURIComponent(location.name)}"
-          data-lat="${location.latitude}"
-          data-lon="${location.longitude}"
-        >
-          ${location.name}
-        </button>
-      `
-    )
-    .join("");
 }
 
 function stateToUrl() {
@@ -1320,8 +1231,6 @@ async function loadLocation(location, statusMessage) {
     const forecast = await fetchForecast(location);
     state.activeLocation = location;
     els.locationQuery.value = location.name;
-    rememberLocation(location);
-    renderRecentLocations();
     renderSummary(location, forecast);
     els.searchStatus.textContent = `Loaded live forecast for ${location.name}.`;
   } catch (error) {
@@ -1418,45 +1327,8 @@ els.locationButton.addEventListener("click", () => {
   els.locationQuery.focus();
 });
 
-els.copyLinkButton.addEventListener("click", async () => {
-  const url = currentShareUrl();
-
-  try {
-    await navigator.clipboard.writeText(url);
-    els.searchStatus.textContent = "Current dashboard link copied.";
-  } catch (error) {
-    els.searchStatus.textContent = `Copy failed. Use this link: ${url}`;
-  }
-});
-
-els.recentLocations?.addEventListener("click", async (event) => {
-  const button = event.target.closest("[data-recent-location]");
-
-  if (!button) {
-    return;
-  }
-
-  const name = decodeURIComponent(button.dataset.recentLocation || "");
-  const latitude = Number(button.dataset.lat);
-  const longitude = Number(button.dataset.lon);
-
-  if (!name || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-    return;
-  }
-
-  await loadLocation(
-    {
-      name,
-      latitude,
-      longitude
-    },
-    `Loading ${name}...`
-  );
-});
-
 applyUrlState();
 els.locationQuery.value = state.activeLocation.name;
-renderRecentLocations();
 els.modeButtons.forEach((button) => {
   button.classList.toggle("is-active", button.dataset.mode === state.mode);
 });
