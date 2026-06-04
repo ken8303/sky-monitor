@@ -184,6 +184,7 @@ const els = {
   searchForm: document.querySelector("#search-form"),
   searchStatus: document.querySelector("#search-status"),
   deviceLocationButton: document.querySelector("#device-location-button"),
+  copyLinkButton: document.querySelector("#copy-link-button"),
   sourceNote: document.querySelector("#source-note"),
   statusStrip: document.querySelector("#status-strip"),
   heroEyebrow: document.querySelector("#hero-eyebrow"),
@@ -266,6 +267,10 @@ function stateToUrl() {
 function updateUrlState() {
   const nextUrl = `${window.location.pathname}?${stateToUrl()}${window.location.hash}`;
   window.history.replaceState({}, "", nextUrl);
+}
+
+function currentShareUrl() {
+  return `${window.location.pathname}?${stateToUrl()}${window.location.hash}`;
 }
 
 function applyUrlState() {
@@ -1321,6 +1326,17 @@ els.planButton.addEventListener("click", () => {
 
 els.locationButton.addEventListener("click", () => {
   els.locationQuery.focus();
+});
+
+els.copyLinkButton.addEventListener("click", async () => {
+  const url = currentShareUrl();
+
+  try {
+    await navigator.clipboard.writeText(url);
+    els.searchStatus.textContent = "Current dashboard link copied.";
+  } catch (error) {
+    els.searchStatus.textContent = `Copy failed. Use this link: ${url}`;
+  }
 });
 
 applyUrlState();

@@ -160,6 +160,22 @@ a {
   cursor: pointer;
 }
 
+.search-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.location-link-button {
+  padding: 13px 18px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  font: inherit;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
 .search-status {
   margin: 0;
   color: var(--accent);
