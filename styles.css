@@ -338,6 +338,11 @@ a {
   box-shadow: var(--shadow);
 }
 
+.support-panel {
+  background: linear-gradient(180deg, rgba(8, 24, 36, 0.72), rgba(7, 20, 31, 0.84));
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+}
+
 .hero {
   display: grid;
   grid-template-columns: 1.6fr 1fr;
@@ -391,6 +396,7 @@ a {
 .hero-stats {
   display: grid;
   gap: 14px;
+  align-content: start;
 }
 
 .stat,
@@ -403,6 +409,12 @@ a {
   padding: 18px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.hero-stats .stat:first-child {
+  padding: 22px;
+  background: linear-gradient(180deg, rgba(122, 240, 212, 0.12), rgba(255, 255, 255, 0.04));
+  border-color: rgba(122, 240, 212, 0.16);
 }
 
 .status-card {
@@ -874,12 +886,28 @@ a {
   background: linear-gradient(180deg, rgba(10, 33, 49, 0.78), rgba(8, 24, 36, 0.88));
 }
 
+.support-panel .panel-head h3,
+.support-panel strong {
+  font-size: 1.02em;
+}
+
+.support-panel .eyebrow {
+  color: #8fdcca;
+}
+
 .overview-block .forecast-grid .panel:first-child,
 .planner-block .planner-grid .checklist,
 .planner-block .spotlight-panel,
 .astronomy-block .target-panel {
   background:
     linear-gradient(180deg, rgba(11, 35, 52, 0.88), rgba(8, 24, 36, 0.94));
+}
+
+.live-block .telemetry-panel,
+.live-block .map-panel,
+.planner-block .runbook-panel {
+  background:
+    linear-gradient(180deg, rgba(10, 33, 49, 0.86), rgba(8, 24, 36, 0.94));
 }
 
 .overview-block .conditions-grid .metric {
@@ -1078,6 +1106,12 @@ a {
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.support-panel .quick-item,
+.support-panel .seeing-card,
+.support-panel .alert-item {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .quick-item strong,
