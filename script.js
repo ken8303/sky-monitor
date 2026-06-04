@@ -559,7 +559,6 @@ function deriveSummary(location, forecast) {
     clamp(100 - current.cloud_cover * 0.7 + Math.min((hourly.visibility[0] || 10000) / 1000, 18), 18, 98)
   );
   const avgCloud = daily.cloud_cover_mean || [];
-  const overview = `Live forecast for ${location.name} with ${weatherLabel(current.weather_code).toLowerCase()} conditions and a ${todayMoon.name.toLowerCase()}.`;
   const bestStart = formatClock(best.time);
   const bestPeak = formatClock(best.time);
   const bestScore = best.score;
@@ -579,6 +578,9 @@ function deriveSummary(location, forecast) {
     ? `${todayMoon.name} at ${todayMoon.illumination}% illumination, with nautical twilight from ${nauticalDusk} to ${nauticalDawn}.`
     : `${todayMoon.name} at ${todayMoon.illumination}% illumination, with nautical twilight from ${nauticalDusk} to ${nauticalDawn}. The sky stays in late twilight rather than becoming fully dark.`;
   const darkHoursLabel = hasAstronomicalNight ? `${astroNightHours.toFixed(1)}h` : "0.0h";
+  const overview = hasAstronomicalNight
+    ? `${qualityBadge(bestScore)} conditions. ${darkHoursLabel} of dark sky after ${darkStart}.`
+    : `${qualityBadge(bestScore)} conditions. No full dark window tonight.`;
   const visibilityNow = Math.round((hourly.visibility[0] || 0) / 1000);
   const pressureNow = current.pressure_msl ? `${Math.round(current.pressure_msl)} hPa` : "Model";
   const statusItems = [
@@ -687,12 +689,11 @@ function deriveSummary(location, forecast) {
   };
 
   return {
-    heroTitle: `Best viewing window starts around ${bestStart} and peaks near ${bestPeak}.`,
+    heroTitle: `Best viewing near ${bestPeak}.`,
     heroText: overview,
     stats: [
-      { label: "Cloud Cover", value: `${current.cloud_cover}%`, note: currentLabel },
-      { label: "Humidity", value: `${current.relative_humidity_2m}%`, note: `${Math.round(current.temperature_2m)}°C currently` },
-      { label: "Moon Phase", value: `${todayMoon.illumination}%`, note: todayMoon.name }
+      { label: "Viewing Score", value: `${bestScore}/100`, note: `${bestStart} to ${bestPeak}` },
+      { label: "Dark Sky", value: darkHoursLabel, note: hasAstronomicalNight ? `Moon ${todayMoon.illumination}%` : "Late twilight" }
     ],
     badge: qualityBadge(bestScore),
     note: `${currentLabel} right now, with the strongest near-term score at ${bestPeak}. Wind is ${Math.round(current.wind_speed_10m)} km/h and humidity is ${current.relative_humidity_2m}%.`,
@@ -785,7 +786,7 @@ function renderSummary(location, forecast) {
   renderStatusStrip(summary.statusItems);
   els.qualityBadge.textContent = summary.badge;
   els.qualityNote.textContent = summary.note;
-  els.sourceNote.textContent = `Forecast timezone: ${forecast.timezone}. Live weather from Open-Meteo, moon phase estimated in-browser.`;
+  els.sourceNote.textContent = `Timezone: ${forecast.timezone}. Forecast by Open-Meteo.`;
 
   els.timelineLabels.innerHTML = summary.timeline.map((item) => `<span>${item.time}</span>`).join("");
   els.timelineBars.innerHTML = summary.timeline
