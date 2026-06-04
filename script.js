@@ -227,6 +227,8 @@ const els = {
   moonwatchSubtitle: document.querySelector("#moonwatch-subtitle"),
   moonwatchGrid: document.querySelector("#moonwatch-grid"),
   moonwatchNote: document.querySelector("#moonwatch-note"),
+  collapsibleBlocks: document.querySelectorAll("[data-collapsible-block]"),
+  blockToggleButtons: document.querySelectorAll("[data-block-toggle]"),
   modeButtons: document.querySelectorAll("[data-mode]"),
   planButton: document.querySelector("#plan-button"),
   locationButton: document.querySelector("#location-button")
@@ -238,6 +240,38 @@ function toTitle(value) {
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
+}
+
+function isMobileLayout() {
+  return window.matchMedia("(max-width: 720px)").matches;
+}
+
+function setBlockCollapsed(block, shouldCollapse) {
+  if (!block) {
+    return;
+  }
+
+  block.classList.toggle("is-collapsed", shouldCollapse);
+  const toggle = block.querySelector("[data-block-toggle]");
+
+  if (toggle) {
+    toggle.setAttribute("aria-expanded", shouldCollapse ? "false" : "true");
+    toggle.textContent = shouldCollapse ? "Expand" : "Collapse";
+  }
+}
+
+function openBlock(block) {
+  if (!block) {
+    return;
+  }
+
+  if (isMobileLayout()) {
+    els.collapsibleBlocks.forEach((item) => {
+      setBlockCollapsed(item, item !== block);
+    });
+  } else {
+    setBlockCollapsed(block, false);
+  }
 }
 
 function stateToUrl() {
@@ -1321,11 +1355,47 @@ els.mapOverlayButtons.forEach((button) => {
 });
 
 els.planButton.addEventListener("click", () => {
-  document.querySelector("#planner")?.scrollIntoView({ behavior: "smooth" });
+  const plannerBlock = document.querySelector("#planner");
+  openBlock(plannerBlock);
+  plannerBlock?.scrollIntoView({ behavior: "smooth" });
 });
 
 els.locationButton.addEventListener("click", () => {
   els.locationQuery.focus();
+});
+
+els.blockToggleButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const block = button.closest("[data-collapsible-block]");
+
+    if (!block) {
+      return;
+    }
+
+    const shouldCollapse = !block.classList.contains("is-collapsed");
+
+    if (isMobileLayout()) {
+      if (shouldCollapse) {
+        setBlockCollapsed(block, true);
+      } else {
+        openBlock(block);
+      }
+    } else {
+      setBlockCollapsed(block, false);
+    }
+  });
+});
+
+document.querySelectorAll(".topnav a[href^='#']").forEach((link) => {
+  link.addEventListener("click", () => {
+    const targetId = link.getAttribute("href");
+    if (!targetId) {
+      return;
+    }
+
+    const targetBlock = document.querySelector(targetId);
+    openBlock(targetBlock);
+  });
 });
 
 applyUrlState();

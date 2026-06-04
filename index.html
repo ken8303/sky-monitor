@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260604d" />
+    <link rel="stylesheet" href="styles.css?v=20260604e" />
   </head>
   <body>
     <div class="page-shell">
@@ -50,14 +50,18 @@
       </header>
 
       <main class="dashboard">
-        <section class="dashboard-block overview-block" id="overview">
+        <section class="dashboard-block overview-block" id="overview" data-collapsible-block>
           <div class="block-head">
             <div>
               <p class="eyebrow">Tonight Overview</p>
               <h2>Decide quickly if this session is worth the setup</h2>
             </div>
             <p class="block-copy">Lead with the decision, the best window, and the conditions most likely to change what you do next.</p>
+            <button type="button" class="block-toggle" data-block-toggle aria-expanded="true" aria-controls="overview-content">
+              Collapse
+            </button>
           </div>
+          <div class="dashboard-block-content" id="overview-content">
 
           <section class="hero card">
             <div class="hero-copy">
@@ -140,16 +144,21 @@
               </article>
             </section>
           </div>
+          </div>
         </section>
 
-        <section class="dashboard-block live-block" id="live-conditions">
+        <section class="dashboard-block live-block is-collapsed" id="live-conditions" data-collapsible-block>
           <div class="block-head">
             <div>
               <p class="eyebrow">Live Conditions</p>
               <h2>Watch the sky and the weather together</h2>
             </div>
             <p class="block-copy">Keep the near-term telemetry, cloud layers, and area map in one place so the tactical view is easy to read.</p>
+            <button type="button" class="block-toggle" data-block-toggle aria-expanded="false" aria-controls="live-conditions-content">
+              Expand
+            </button>
           </div>
+          <div class="dashboard-block-content" id="live-conditions-content">
 
           <section class="telemetry-grid">
           <article class="card panel telemetry-panel">
@@ -251,16 +260,21 @@
               </article>
             </section>
           </div>
+          </div>
         </section>
 
-        <section class="dashboard-block astronomy-block" id="astronomy">
+        <section class="dashboard-block astronomy-block is-collapsed" id="astronomy" data-collapsible-block>
           <div class="block-head">
             <div>
               <p class="eyebrow">Astronomy</p>
               <h2>Targets, altitude, and moon impact</h2>
             </div>
             <p class="block-copy">Keep the object-facing parts of the night together so the dashboard feels distinct from the operational weather view.</p>
+            <button type="button" class="block-toggle" data-block-toggle aria-expanded="false" aria-controls="astronomy-content">
+              Expand
+            </button>
           </div>
+          <div class="dashboard-block-content" id="astronomy-content">
 
           <section class="astronomy-grid">
           <article class="card panel target-panel">
@@ -297,16 +311,21 @@
             <p class="panel-note" id="moonwatch-note"></p>
           </article>
           </section>
+          </div>
         </section>
 
-        <section class="dashboard-block planner-block" id="planner">
+        <section class="dashboard-block planner-block is-collapsed" id="planner" data-collapsible-block>
           <div class="block-head">
             <div>
               <p class="eyebrow">Planner</p>
               <h2>Turn the forecast into a usable session plan</h2>
             </div>
             <p class="block-copy">Group the recommendation engine, the runbook, and the named-object picks so the planning lane feels coherent.</p>
+            <button type="button" class="block-toggle" data-block-toggle aria-expanded="false" aria-controls="planner-content">
+              Expand
+            </button>
           </div>
+          <div class="dashboard-block-content" id="planner-content">
 
           <section class="planner-grid">
             <article class="card panel checklist">
@@ -374,10 +393,11 @@
               </article>
             </div>
           </section>
+          </div>
         </section>
       </main>
     </div>
 
-    <script src="script.js?v=20260604d"></script>
+    <script src="script.js?v=20260604e"></script>
   </body>
 </html>
