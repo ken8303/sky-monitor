@@ -172,7 +172,6 @@ const astro = (() => {
 })();
 
 const state = {
-  locationKey: "dartmoor",
   mode: "visual",
   mapOverlay: "clouds",
   activeLocation: presetLocations.dartmoor,
@@ -181,7 +180,6 @@ const state = {
 };
 
 const els = {
-  locationSelect: document.querySelector("#location-select"),
   locationQuery: document.querySelector("#location-query"),
   searchForm: document.querySelector("#search-form"),
   searchStatus: document.querySelector("#search-status"),
@@ -240,6 +238,59 @@ function toTitle(value) {
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
+}
+
+function stateToUrl() {
+  const params = new URLSearchParams();
+  const location = state.activeLocation;
+
+  if (location?.name) {
+    params.set("loc", location.name);
+  }
+  if (Number.isFinite(location?.latitude)) {
+    params.set("lat", location.latitude.toFixed(4));
+  }
+  if (Number.isFinite(location?.longitude)) {
+    params.set("lon", location.longitude.toFixed(4));
+  }
+  if (state.mode !== "visual") {
+    params.set("mode", state.mode);
+  }
+  if (state.mapOverlay !== "clouds") {
+    params.set("map", state.mapOverlay);
+  }
+
+  return params.toString();
+}
+
+function updateUrlState() {
+  const nextUrl = `${window.location.pathname}?${stateToUrl()}${window.location.hash}`;
+  window.history.replaceState({}, "", nextUrl);
+}
+
+function applyUrlState() {
+  const params = new URLSearchParams(window.location.search);
+  const lat = Number(params.get("lat"));
+  const lon = Number(params.get("lon"));
+  const loc = params.get("loc");
+  const mode = params.get("mode");
+  const map = params.get("map");
+
+  if (loc && Number.isFinite(lat) && Number.isFinite(lon)) {
+    state.activeLocation = {
+      name: loc,
+      latitude: lat,
+      longitude: lon
+    };
+  }
+
+  if (mode && ["visual", "photo", "travel"].includes(mode)) {
+    state.mode = mode;
+  }
+
+  if (map && mapOverlayConfig[map]) {
+    state.mapOverlay = map;
+  }
 }
 
 function formatClock(isoString) {
@@ -787,6 +838,7 @@ function renderSummary(location, forecast) {
   renderTargetChart(summary.targetTracks, summary.targetLabels);
   renderMoonwatch(summary.moonwatch);
   renderTargets();
+  updateUrlState();
 }
 
 async function fetchForecast(location) {
@@ -1174,18 +1226,13 @@ async function loadLocation(location, statusMessage) {
   try {
     const forecast = await fetchForecast(location);
     state.activeLocation = location;
+    els.locationQuery.value = location.name;
     renderSummary(location, forecast);
     els.searchStatus.textContent = `Loaded live forecast for ${location.name}.`;
   } catch (error) {
     els.searchStatus.textContent = "Live weather could not be loaded right now. Please try again.";
   }
 }
-
-els.locationSelect.addEventListener("change", async (event) => {
-  const location = presetLocations[event.target.value];
-  state.locationKey = event.target.value;
-  await loadLocation(location, `Loading ${location.name}...`);
-});
 
 els.searchForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -1200,7 +1247,6 @@ els.searchForm.addEventListener("submit", async (event) => {
 
   try {
     const foundLocation = await fetchLocationBySearch(query);
-    els.locationSelect.value = "custom";
     await loadLocation(foundLocation, `Loading ${foundLocation.name}...`);
   } catch (error) {
     els.searchStatus.textContent = error.message;
@@ -1223,7 +1269,6 @@ els.deviceLocationButton.addEventListener("click", async () => {
 
       try {
         const foundLocation = await reverseGeocode(latitude, longitude);
-        els.locationSelect.value = "custom";
         await loadLocation(foundLocation, `Loading ${foundLocation.name}...`);
       } catch (error) {
         const fallbackLocation = {
@@ -1231,7 +1276,6 @@ els.deviceLocationButton.addEventListener("click", async () => {
           latitude,
           longitude
         };
-        els.locationSelect.value = "custom";
         await loadLocation(fallbackLocation, `Loading ${fallbackLocation.name}...`);
       }
     },
@@ -1256,6 +1300,7 @@ els.modeButtons.forEach((button) => {
     state.mode = button.dataset.mode;
     if (state.liveSummary) {
       renderTargets();
+      updateUrlState();
     }
   });
 });
@@ -1265,6 +1310,7 @@ els.mapOverlayButtons.forEach((button) => {
     state.mapOverlay = button.dataset.mapOverlay;
     if (state.liveSummary && state.activeLocation) {
       renderMap(state.activeLocation, state.liveSummary);
+      updateUrlState();
     }
   });
 });
@@ -1277,4 +1323,12 @@ els.locationButton.addEventListener("click", () => {
   els.locationQuery.focus();
 });
 
+applyUrlState();
+els.locationQuery.value = state.activeLocation.name;
+els.modeButtons.forEach((button) => {
+  button.classList.toggle("is-active", button.dataset.mode === state.mode);
+});
+els.mapOverlayButtons.forEach((button) => {
+  button.classList.toggle("is-active", button.dataset.mapOverlay === state.mapOverlay);
+});
 loadLocation(state.activeLocation, `Loading ${state.activeLocation.name}...`);

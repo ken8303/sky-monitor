@@ -99,16 +99,10 @@ a {
   padding: 20px 22px 10px 0;
 }
 
-.location-picker {
-  display: grid;
-  gap: 8px;
-  min-width: 220px;
-}
-
 .controls {
   grid-area: controls;
   display: grid;
-  gap: 14px;
+  gap: 12px;
   min-width: min(100%, 420px);
   padding: 18px;
   border-radius: 24px;
@@ -116,23 +110,6 @@ a {
   background: linear-gradient(180deg, rgba(8, 28, 42, 0.84), rgba(8, 24, 36, 0.92));
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
-}
-
-.location-picker span {
-  color: var(--muted);
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-}
-
-.location-picker select {
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 13px 16px;
-  font: inherit;
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.05);
-  outline: none;
 }
 
 .search-form {
@@ -1223,10 +1200,6 @@ a {
 
   .brand-block {
     padding-right: 0;
-  }
-
-  .location-picker {
-    width: 100%;
   }
 
   .controls {
