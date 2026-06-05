@@ -354,6 +354,25 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+function nextNightSessionStart(location, fromDate = new Date()) {
+  const isNightEnough = (date) => astro.sunAltitude(date, location.latitude, location.longitude) <= -12;
+
+  if (isNightEnough(fromDate)) {
+    return fromDate;
+  }
+
+  const end = new Date(fromDate.getTime() + 36 * 3600000);
+  const crossings = findThresholdCrossings(
+    (date) => astro.sunAltitude(date, location.latitude, location.longitude),
+    -12,
+    fromDate,
+    end
+  );
+  const nextNightfall = crossings.find((entry) => entry.direction === "setting" && entry.date >= fromDate);
+
+  return nextNightfall?.date || fromDate;
+}
+
 function currentLocation() {
   return state.activeLocation;
 }
@@ -420,7 +439,8 @@ function applyUrlState() {
 }
 
 function targetDate() {
-  return new Date(Date.now() + state.hoursOffset * 3600000);
+  const baseDate = nextNightSessionStart(currentLocation());
+  return new Date(baseDate.getTime() + state.hoursOffset * 3600000);
 }
 
 async function fetchTimezoneForCoordinates(latitude, longitude) {
@@ -798,7 +818,7 @@ function describeMoonImpact(location, date = new Date()) {
 }
 
 function buildAstronomySummary(location) {
-  const now = new Date();
+  const now = nextNightSessionStart(location);
   const end = new Date(now.getTime() + 36 * 3600000);
   const sunAt = (date) => astro.sunAltitude(date, location.latitude, location.longitude);
   const moonAt = (date) => astro.moonPosition(date, location.latitude, location.longitude).altitude;
@@ -880,7 +900,7 @@ function seasonalBonusForObject(object, location, date) {
 }
 
 function buildTonightSuggestion(location) {
-  const now = new Date();
+  const now = nextNightSessionStart(location);
   const astronomy = buildAstronomySummary(location);
   const moonState = describeMoonImpact(location, now);
   const samples = Array.from({ length: 13 }, (_, index) => {
@@ -933,7 +953,7 @@ function bestTargetForTonight(location) {
 }
 
 function eligibleNightObjects(location) {
-  const now = new Date();
+  const now = nextNightSessionStart(location);
   const bestByName = new Map();
 
   Array.from({ length: 13 }, (_, index) => new Date(now.getTime() + index * 3600000))
@@ -957,7 +977,7 @@ function eligibleNightObjects(location) {
 }
 
 function buildSelectedTimeline(location, object) {
-  const now = new Date();
+  const now = nextNightSessionStart(location);
   const samples = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(now.getTime() + index * 2 * 3600000);
     const coords = astro.altAz(date, location.latitude, location.longitude, object.ra, object.dec);
@@ -986,12 +1006,12 @@ function buildSelectedTimeline(location, object) {
 }
 
 function buildSeasonalTargets(location) {
-  const pack = seasonalPackForLocation(location, new Date());
-  const now = new Date();
+  const pack = seasonalPackForLocation(location, targetDate());
+  const now = nextNightSessionStart(location);
   const rankedMap = new Map();
 
   Array.from({ length: 13 }, (_, index) => new Date(now.getTime() + index * 3600000)).forEach((sampleDate) => {
-    if (astro.sunAltitude(sampleDate, location.latitude, location.longitude) > -6) {
+    if (astro.sunAltitude(sampleDate, location.latitude, location.longitude) > -12) {
       return;
     }
     rankObjects(location, sampleDate)
@@ -1020,6 +1040,7 @@ function buildSeasonalTargets(location) {
 }
 
 function buildNightRoute(location) {
+  const baseDate = nextNightSessionStart(location);
   const checkpoints = [
     { label: "Start", offsetHours: 0, detail: "Begin with the strongest object that is already comfortable to frame." },
     { label: "+2h", offsetHours: 2, detail: "Shift once the sky deepens or a seasonal object climbs into a cleaner altitude." },
@@ -1027,8 +1048,8 @@ function buildNightRoute(location) {
   ];
   const usedNames = new Set();
   const route = checkpoints.map((checkpoint) => {
-    const date = new Date(Date.now() + checkpoint.offsetHours * 3600000);
-    const ranked = astro.sunAltitude(date, location.latitude, location.longitude) <= -6
+    const date = new Date(baseDate.getTime() + checkpoint.offsetHours * 3600000);
+    const ranked = astro.sunAltitude(date, location.latitude, location.longitude) <= -12
       ? rankObjects(location, date).filter((item) => item.altitude > 25)
       : [];
     const pick = ranked.find((item) => !usedNames.has(item.name)) || ranked[0] || null;
@@ -1053,7 +1074,7 @@ function buildNightRoute(location) {
 
 function buildWatchouts(location, selected, ranked) {
   const astronomy = buildAstronomySummary(location);
-  const moonState = describeMoonImpact(location);
+  const moonState = describeMoonImpact(location, targetDate());
   const selectedVisible = ranked.find((item) => item.name === selected.name);
   const alerts = [];
 
@@ -1274,8 +1295,9 @@ function renderAstronomySummary(location) {
 }
 
 function renderInfo(selected, selectedPoint, ranked, location) {
-  const visible = ranked.find((item) => item.name === selected.name);
-  const pack = seasonalPackForLocation(location, new Date());
+  const nightRanked = rankObjects(location, targetDate());
+  const visible = nightRanked.find((item) => item.name === selected.name);
+  const pack = seasonalPackForLocation(location, targetDate());
   els.objectTitle.textContent = selected.name;
   const infoItems = [
     ["Type", selected.type],
