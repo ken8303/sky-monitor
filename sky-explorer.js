@@ -127,6 +127,7 @@ const constellationLines = [
 
 const state = {
   activeLocation: presetLocations.dartmoor,
+  selectedDate: "",
   hoursOffset: 0,
   selectedName: "",
   showLabels: true,
@@ -140,6 +141,7 @@ const els = {
   locationSearchButton: document.querySelector("#location-search-button"),
   deviceLocationButton: document.querySelector("#device-location-button"),
   locationStatus: document.querySelector("#location-status"),
+  observationDate: document.querySelector("#observation-date"),
   objectSelect: document.querySelector("#object-select"),
   slider: document.querySelector("#time-slider"),
   resetTime: document.querySelector("#reset-time"),
@@ -354,14 +356,83 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
-function nextNightSessionStart(location, fromDate = new Date()) {
-  const isNightEnough = (date) => astro.sunAltitude(date, location.latitude, location.longitude) <= -12;
+function timeZoneParts(date, timezone) {
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23"
+  });
 
-  if (isNightEnough(fromDate)) {
-    return fromDate;
+  return Object.fromEntries(
+    formatter
+      .formatToParts(date)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
+  );
+}
+
+function timeZoneOffsetMs(date, timezone) {
+  if (!timezone) {
+    return -date.getTimezoneOffset() * 60000;
   }
 
-  const end = new Date(fromDate.getTime() + 36 * 3600000);
+  const parts = timeZoneParts(date, timezone);
+  const utcTime = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute),
+    Number(parts.second)
+  );
+
+  return utcTime - date.getTime();
+}
+
+function currentLocation() {
+  return state.activeLocation;
+}
+
+function locationDateString(date, location = currentLocation()) {
+  return formatInLocationTime(
+    date,
+    {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    },
+    location
+  ).split("/").reverse().join("-");
+}
+
+function zonedDateForLocation(location, dateString, hour = 12) {
+  const [year, month, day] = dateString.split("-").map(Number);
+  const guessTime = Date.UTC(year, month - 1, day, hour, 0, 0);
+  let result = new Date(guessTime);
+
+  if (!location?.timezone) {
+    return result;
+  }
+
+  for (let index = 0; index < 2; index += 1) {
+    const offset = timeZoneOffsetMs(result, location.timezone);
+    result = new Date(guessTime - offset);
+  }
+
+  return result;
+}
+
+function activePlanningDate(location = currentLocation()) {
+  return state.selectedDate || locationDateString(new Date(), location);
+}
+
+function nextNightSessionStart(location, dateString = activePlanningDate(location)) {
+  const fromDate = zonedDateForLocation(location, dateString, 12);
   const crossings = findThresholdCrossings(
     (date) => astro.sunAltitude(date, location.latitude, location.longitude),
     -12,
@@ -373,10 +444,6 @@ function nextNightSessionStart(location, fromDate = new Date()) {
   return nextNightfall?.date || fromDate;
 }
 
-function currentLocation() {
-  return state.activeLocation;
-}
-
 function stateToUrl() {
   const params = new URLSearchParams();
   const location = currentLocation();
@@ -386,6 +453,7 @@ function stateToUrl() {
   if (location.timezone) {
     params.set("tz", location.timezone);
   }
+  params.set("date", activePlanningDate(location));
   params.set("obj", state.selectedName || bestTargetForTonight(location).name);
   if (state.hoursOffset !== 0) {
     params.set("hours", String(state.hoursOffset));
@@ -413,6 +481,7 @@ function applyUrlState() {
   const lon = Number(params.get("lon"));
   const loc = params.get("loc");
   const timezone = params.get("tz");
+  const date = params.get("date");
   const obj = params.get("obj");
   const hours = Number(params.get("hours"));
 
@@ -429,6 +498,10 @@ function applyUrlState() {
     state.hoursOffset = hours;
   }
 
+  if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    state.selectedDate = date;
+  }
+
   state.showLabels = params.get("labels") !== "0";
   state.showConstellations = params.get("constellations") !== "0";
   state.showAtmosphere = params.get("atmosphere") !== "0";
@@ -439,7 +512,7 @@ function applyUrlState() {
 }
 
 function targetDate() {
-  const baseDate = nextNightSessionStart(currentLocation());
+  const baseDate = nextNightSessionStart(currentLocation(), activePlanningDate());
   return new Date(baseDate.getTime() + state.hoursOffset * 3600000);
 }
 
@@ -1130,6 +1203,7 @@ function buildPlanSnapshot(location, selected) {
     createdAt: new Date().toISOString(),
     title: `${selected.name} from ${location.name}`,
     location: location.name,
+    date: activePlanningDate(location),
     object: selected.name,
     summary: `${time} · ${tonight.cards[0]?.[1] || "Night session"} · ${astronomy.cards[2]?.[1] || "No dark window"}`
   };
@@ -1501,7 +1575,7 @@ function renderRecordPanels(location, selected) {
     ? plans.map((entry) => `
         <div class="record-entry">
           <strong>${entry.title}</strong>
-          <small>${entry.timeLabel}</small>
+          <small>${entry.date || ""} · ${entry.timeLabel}</small>
           <span>${entry.summary}</span>
         </div>
       `).join("")
@@ -1513,7 +1587,7 @@ function renderRecordPanels(location, selected) {
     `;
 
   els.recordStatus.textContent = state.noteDraft.trim()
-    ? `Drafting a note for ${selected.name} from ${location.name}.`
+    ? `Drafting a note for ${selected.name} on ${planningDateLabel(location)}.`
     : "No note saved yet for this session.";
 }
 
@@ -1525,18 +1599,37 @@ function populateOptions() {
     .join("");
 }
 
+function planningDateLabel(location = currentLocation()) {
+  const sessionDate = zonedDateForLocation(location, activePlanningDate(location), 20);
+  return formatInLocationTime(
+    sessionDate,
+    {
+      weekday: "short",
+      day: "numeric",
+      month: "short"
+    },
+    location
+  );
+}
+
+function trimTrailingPunctuation(text) {
+  return text.replace(/[.!\s]+$/, "");
+}
+
 async function applyLocation(location, statusText) {
   if (!location.timezone) {
     location.timezone = await fetchTimezoneForCoordinates(location.latitude, location.longitude).catch(() => undefined);
   }
   state.activeLocation = location;
+  state.selectedDate = state.selectedDate || locationDateString(new Date(), location);
   populateOptions();
   const chosen = state.selectedName ? objectByName(state.selectedName).name : bestTargetForTonight(location).name;
   const eligibleNames = [...els.objectSelect.options].map((option) => option.value);
   state.selectedName = eligibleNames.includes(chosen) ? chosen : bestTargetForTonight(location).name;
   els.objectSelect.value = state.selectedName;
   els.location.value = location.name;
-  els.locationStatus.textContent = statusText || `Using ${location.name}.`;
+  els.observationDate.value = activePlanningDate(location);
+  els.locationStatus.textContent = `${trimTrailingPunctuation(statusText || `Using ${location.name}`)}. Planning for ${planningDateLabel(location)}.`;
   drawSky();
 }
 
@@ -1581,6 +1674,23 @@ els.slider.addEventListener("input", () => {
 els.resetTime.addEventListener("click", () => {
   state.hoursOffset = 0;
   els.slider.value = "0";
+  drawSky();
+});
+
+els.observationDate.addEventListener("input", () => {
+  if (!els.observationDate.value) {
+    return;
+  }
+
+  state.selectedDate = els.observationDate.value;
+  state.hoursOffset = 0;
+  els.slider.value = "0";
+  populateOptions();
+  const preferred = state.selectedName ? objectByName(state.selectedName).name : bestTargetForTonight(currentLocation()).name;
+  const eligibleNames = [...els.objectSelect.options].map((option) => option.value);
+  state.selectedName = eligibleNames.includes(preferred) ? preferred : bestTargetForTonight(currentLocation()).name;
+  els.objectSelect.value = state.selectedName;
+  els.locationStatus.textContent = `Using ${currentLocation().name} for ${planningDateLabel()}.`;
   drawSky();
 });
 
@@ -1690,6 +1800,7 @@ els.toggles.forEach((button) => {
 });
 
 applyUrlState();
+state.selectedDate = state.selectedDate || locationDateString(new Date(), state.activeLocation);
 populateOptions();
 {
   const optionNames = [...els.objectSelect.options].map((option) => option.value);
@@ -1698,7 +1809,8 @@ populateOptions();
 }
 els.objectSelect.value = state.selectedName;
 els.location.value = state.activeLocation.name;
-els.locationStatus.textContent = `Using ${state.activeLocation.name}.`;
+els.observationDate.value = activePlanningDate(state.activeLocation);
+els.locationStatus.textContent = `Using ${state.activeLocation.name} for ${planningDateLabel(state.activeLocation)}.`;
 els.slider.value = String(state.hoursOffset);
 els.toggles.forEach((button) => {
   const key = button.dataset.toggle;

@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="sky-explorer.css?v=20260602d" />
+    <link rel="stylesheet" href="sky-explorer.css?v=20260605a" />
   </head>
   <body>
     <div class="sky-shell">
@@ -42,13 +42,19 @@
             <small class="field-note" id="location-status">Search for a place or use your current device location.</small>
           </label>
 
+          <label class="field">
+            <span>Observation date</span>
+            <input id="observation-date" type="date" />
+            <small class="field-note">Choose the local night you want to plan for at this location.</small>
+          </label>
+
           <label class="field field-wide">
             <span>Find object</span>
             <select id="object-select"></select>
           </label>
 
           <label class="field">
-            <span>Hours from now</span>
+            <span>Hours from night start</span>
             <input id="time-slider" type="range" min="-12" max="12" step="1" value="0" />
           </label>
 
@@ -56,7 +62,7 @@
             <button type="button" class="pill is-active" data-toggle="labels">Labels</button>
             <button type="button" class="pill is-active" data-toggle="constellations">Constellations</button>
             <button type="button" class="pill is-active" data-toggle="atmosphere">Atmosphere</button>
-            <button type="button" class="pill" id="reset-time">Now</button>
+            <button type="button" class="pill" id="reset-time">Night start</button>
           </div>
         </section>
 
@@ -109,7 +115,7 @@
                 <div class="panel-head">
                   <div>
                     <p class="eyebrow">Target Timeline</p>
-                    <h3>How this object behaves tonight</h3>
+                    <h3>How this object behaves that night</h3>
                   </div>
                 </div>
                 <div class="timeline-chart-wrap">
@@ -126,7 +132,7 @@
           <div class="section-heading">
             <div>
               <p class="eyebrow">Plan</p>
-              <h2>Build tonight’s session</h2>
+              <h2>Build this observing session</h2>
             </div>
             <p class="section-copy">Use the night summary, shortlist, route, and watchouts to decide whether tonight is worth setting up for and what to observe first.</p>
           </div>
@@ -134,7 +140,7 @@
             <article class="card panel tonight-panel plan-hero">
               <div class="panel-head">
                 <div>
-                  <p class="eyebrow">Tonight</p>
+                  <p class="eyebrow">Selected Night</p>
                   <h3>Stargazing suggestion</h3>
                 </div>
               </div>
@@ -233,7 +239,7 @@
               <div class="record-actions">
                 <button type="button" class="pill is-active" id="save-plan-button">Save current plan</button>
               </div>
-              <p class="panel-note" id="plans-note">Save the current location, object, dark window, and moon conditions as a quick reference.</p>
+              <p class="panel-note" id="plans-note">Save the current location, date, object, dark window, and moon conditions as a quick reference.</p>
               <div class="record-list" id="plans-list"></div>
             </article>
           </div>
@@ -241,6 +247,6 @@
       </main>
     </div>
 
-    <script src="sky-explorer.js?v=20260602d"></script>
+    <script src="sky-explorer.js?v=20260605a"></script>
   </body>
 </html>
