@@ -433,6 +433,7 @@ function activePlanningDate(location = currentLocation()) {
 
 function nextNightSessionStart(location, dateString = activePlanningDate(location)) {
   const fromDate = zonedDateForLocation(location, dateString, 12);
+  const end = new Date(fromDate.getTime() + 36 * 3600000);
   const crossings = findThresholdCrossings(
     (date) => astro.sunAltitude(date, location.latitude, location.longitude),
     -12,
