@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260604f" />
+    <link rel="stylesheet" href="styles.css?v=20260606a" />
   </head>
   <body>
     <div class="page-shell">
@@ -77,6 +77,27 @@
             <div class="hero-stats" id="hero-stats"></div>
           </section>
 
+          <article class="card panel mobile-priority-card" id="mobile-priority-card">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Tonight Pick</p>
+                <h3>One target to center the session around</h3>
+              </div>
+            </div>
+            <div class="mobile-priority-copy" id="mobile-priority"></div>
+          </article>
+
+          <button
+            type="button"
+            class="overview-detail-toggle"
+            id="overview-detail-toggle"
+            aria-expanded="false"
+            aria-controls="overview-details"
+          >
+            Show more signals
+          </button>
+
+          <div class="overview-details" id="overview-details">
           <section class="status-strip" id="status-strip" aria-label="Live status strip"></section>
 
           <div class="overview-grid">
@@ -143,6 +164,7 @@
                 </div>
               </article>
             </section>
+          </div>
           </div>
           </div>
         </section>
@@ -398,6 +420,6 @@
       </main>
     </div>
 
-    <script src="script.js?v=20260604f"></script>
+    <script src="script.js?v=20260606a"></script>
   </body>
 </html>

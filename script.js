@@ -190,6 +190,8 @@ const els = {
   heroTitle: document.querySelector("#hero-title"),
   heroText: document.querySelector("#hero-text"),
   heroStats: document.querySelector("#hero-stats"),
+  mobilePriority: document.querySelector("#mobile-priority"),
+  overviewDetailToggle: document.querySelector("#overview-detail-toggle"),
   qualityBadge: document.querySelector("#quality-badge"),
   qualityNote: document.querySelector("#quality-note"),
   timelineLabels: document.querySelector("#timeline-labels"),
@@ -244,6 +246,18 @@ function clamp(value, min, max) {
 
 function isMobileLayout() {
   return window.matchMedia("(max-width: 720px)").matches;
+}
+
+function setOverviewDetailsExpanded(shouldExpand) {
+  const overviewBlock = document.querySelector("#overview");
+
+  if (!overviewBlock || !els.overviewDetailToggle) {
+    return;
+  }
+
+  overviewBlock.classList.toggle("is-details-expanded", shouldExpand);
+  els.overviewDetailToggle.setAttribute("aria-expanded", shouldExpand ? "true" : "false");
+  els.overviewDetailToggle.textContent = shouldExpand ? "Hide extra signals" : "Show more signals";
 }
 
 function setBlockCollapsed(block, shouldCollapse) {
@@ -788,6 +802,7 @@ function deriveSummary(location, forecast) {
 
 function renderTargets() {
   const targets = buildTargets(state.liveSummary);
+  const spotlight = buildSpotlight(state.liveSummary);
 
   els.targetList.innerHTML = targets
     .map(
@@ -805,7 +820,21 @@ function renderTargets() {
   });
 
   renderRunbook(buildRunbook(state.liveSummary), state.liveSummary.alerts, state.liveSummary.alertsNote);
-  renderSpotlight(buildSpotlight(state.liveSummary));
+  renderSpotlight(spotlight);
+
+  if (els.mobilePriority) {
+    const lead = spotlight[0];
+    els.mobilePriority.innerHTML = lead
+      ? `
+        <strong>${lead.name}</strong>
+        <span>${lead.type} peaks near ${lead.peakTime} at about ${lead.peakAltitude}°.</span>
+        <small>${lead.recommendation}</small>
+      `
+      : `
+        <strong>No standout target yet</strong>
+        <small>Wait for the dark window to settle or switch location for a stronger recommendation.</small>
+      `;
+  }
 }
 
 function renderSummary(location, forecast) {
@@ -1364,6 +1393,12 @@ els.locationButton.addEventListener("click", () => {
   els.locationQuery.focus();
 });
 
+els.overviewDetailToggle?.addEventListener("click", () => {
+  const overviewBlock = document.querySelector("#overview");
+  const shouldExpand = !overviewBlock?.classList.contains("is-details-expanded");
+  setOverviewDetailsExpanded(shouldExpand);
+});
+
 els.blockToggleButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const block = button.closest("[data-collapsible-block]");
@@ -1394,12 +1429,18 @@ document.querySelectorAll(".topnav a[href^='#']").forEach((link) => {
     }
 
     const targetBlock = document.querySelector(targetId);
+    if (isMobileLayout() && ["#forecast", "#conditions"].includes(targetId)) {
+      setOverviewDetailsExpanded(true);
+      openBlock(document.querySelector("#overview"));
+      return;
+    }
     openBlock(targetBlock);
   });
 });
 
 applyUrlState();
 els.locationQuery.value = state.activeLocation.name;
+setOverviewDetailsExpanded(false);
 els.modeButtons.forEach((button) => {
   button.classList.toggle("is-active", button.dataset.mode === state.mode);
 });
