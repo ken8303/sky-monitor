@@ -146,6 +146,8 @@ const state = {
   noteDraft: ""
 };
 
+const sharedStateKey = "sky-monitor-shared-location";
+
 const els = {
   location: document.querySelector("#explorer-location"),
   locationSearchButton: document.querySelector("#location-search-button"),
@@ -211,6 +213,42 @@ function saveStoredList(key, items) {
     window.localStorage?.setItem(key, JSON.stringify(items));
   } catch {
     // Ignore storage errors and keep the live session usable.
+  }
+}
+
+function readSharedLocation() {
+  try {
+    const raw = window.localStorage?.getItem(sharedStateKey);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (!parsed) {
+      return null;
+    }
+    if (!parsed.name || !Number.isFinite(parsed.latitude) || !Number.isFinite(parsed.longitude)) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeSharedLocation(location = currentLocation()) {
+  if (!location?.name || !Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) {
+    return;
+  }
+  try {
+    window.localStorage?.setItem(
+      sharedStateKey,
+      JSON.stringify({
+        name: location.name,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        timezone: location.timezone,
+        bortle: Number.isFinite(state.bortle) ? state.bortle : undefined
+      })
+    );
+  } catch {
+    // Ignore storage failures and keep the explorer working.
   }
 }
 
@@ -508,6 +546,8 @@ function stateToUrl() {
 function updateUrlState() {
   const nextUrl = `${window.location.pathname}?${stateToUrl()}${window.location.hash}`;
   window.history.replaceState({}, "", nextUrl);
+  writeSharedLocation();
+  syncCrossPageLinks();
 }
 
 function applyUrlState() {
@@ -528,6 +568,17 @@ function applyUrlState() {
       longitude: lon,
       timezone: timezone || undefined
     };
+  } else {
+    const sharedLocation = readSharedLocation();
+    if (sharedLocation) {
+      state.activeLocation = {
+        name: sharedLocation.name,
+        latitude: sharedLocation.latitude,
+        longitude: sharedLocation.longitude,
+        timezone: sharedLocation.timezone || undefined,
+        bortle: Number.isFinite(sharedLocation.bortle) ? sharedLocation.bortle : state.bortle
+      };
+    }
   }
 
   if (Number.isFinite(hours) && hours >= -12 && hours <= 12) {
@@ -540,6 +591,11 @@ function applyUrlState() {
 
   if (Number.isFinite(bortle) && bortle >= 1 && bortle <= 9) {
     state.bortle = bortle;
+  } else {
+    const sharedLocation = readSharedLocation();
+    if (Number.isFinite(sharedLocation?.bortle) && sharedLocation.bortle >= 1 && sharedLocation.bortle <= 9) {
+      state.bortle = sharedLocation.bortle;
+    }
   }
 
   state.showLabels = params.get("labels") !== "0";
@@ -549,6 +605,24 @@ function applyUrlState() {
   if (obj) {
     state.selectedName = objectByName(obj).name;
   }
+}
+
+function dashboardUrl() {
+  const params = new URLSearchParams();
+  const location = currentLocation();
+  params.set("loc", location.name);
+  params.set("lat", location.latitude.toFixed(4));
+  params.set("lon", location.longitude.toFixed(4));
+  if (Number.isFinite(state.bortle)) {
+    params.set("bortle", String(state.bortle));
+  }
+  return `index.html?${params.toString()}`;
+}
+
+function syncCrossPageLinks() {
+  document.querySelectorAll('a[href^="index.html"]').forEach((link) => {
+    link.setAttribute("href", dashboardUrl());
+  });
 }
 
 function targetDate() {
@@ -1873,6 +1947,7 @@ els.objectSelect.value = state.selectedName;
 els.location.value = state.activeLocation.name;
 els.observationDate.value = activePlanningDate(state.activeLocation);
 els.bortleSelect.value = String(state.bortle);
+syncCrossPageLinks();
 els.locationStatus.textContent = `Using ${state.activeLocation.name} for ${planningDateLabel(state.activeLocation)}.`;
 els.slider.value = String(state.hoursOffset);
 els.toggles.forEach((button) => {

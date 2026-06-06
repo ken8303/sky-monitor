@@ -187,6 +187,8 @@ const state = {
   liveSummary: null
 };
 
+const sharedStateKey = "sky-monitor-shared-location";
+
 const els = {
   locationQuery: document.querySelector("#location-query"),
   searchForm: document.querySelector("#search-form"),
@@ -255,6 +257,41 @@ function toTitle(value) {
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
+}
+
+function readSharedLocation() {
+  try {
+    const raw = window.localStorage?.getItem(sharedStateKey);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (!parsed) {
+      return null;
+    }
+    if (!parsed.name || !Number.isFinite(parsed.latitude) || !Number.isFinite(parsed.longitude)) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeSharedLocation(location = state.activeLocation) {
+  if (!location?.name || !Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) {
+    return;
+  }
+  try {
+    window.localStorage?.setItem(
+      sharedStateKey,
+      JSON.stringify({
+        name: location.name,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        bortle: Number.isFinite(state.bortle) ? state.bortle : undefined
+      })
+    );
+  } catch {
+    // Ignore storage failures and keep the dashboard working.
+  }
 }
 
 function bortleLabel(value) {
@@ -352,6 +389,8 @@ function stateToUrl() {
 function updateUrlState() {
   const nextUrl = `${window.location.pathname}?${stateToUrl()}${window.location.hash}`;
   window.history.replaceState({}, "", nextUrl);
+  writeSharedLocation();
+  syncCrossPageLinks();
 }
 
 function currentShareUrl() {
@@ -385,7 +424,49 @@ function applyUrlState() {
 
   if (Number.isFinite(bortle) && bortle >= 1 && bortle <= 9) {
     state.bortle = bortle;
+    if (state.activeLocation) {
+      state.activeLocation = { ...state.activeLocation, bortle };
+    }
   }
+
+  if (!loc || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+    const sharedLocation = readSharedLocation();
+    if (sharedLocation) {
+      state.activeLocation = {
+        name: sharedLocation.name,
+        latitude: sharedLocation.latitude,
+        longitude: sharedLocation.longitude,
+        bortle: Number.isFinite(sharedLocation.bortle) ? sharedLocation.bortle : state.bortle
+      };
+      if (Number.isFinite(sharedLocation.bortle) && sharedLocation.bortle >= 1 && sharedLocation.bortle <= 9) {
+        state.bortle = sharedLocation.bortle;
+      }
+    }
+  }
+}
+
+function skyExplorerUrl() {
+  const params = new URLSearchParams();
+  const location = state.activeLocation;
+  if (location?.name) {
+    params.set("loc", location.name);
+  }
+  if (Number.isFinite(location?.latitude)) {
+    params.set("lat", location.latitude.toFixed(4));
+  }
+  if (Number.isFinite(location?.longitude)) {
+    params.set("lon", location.longitude.toFixed(4));
+  }
+  if (Number.isFinite(state.bortle)) {
+    params.set("bortle", String(state.bortle));
+  }
+  return `sky-explorer.html?${params.toString()}`;
+}
+
+function syncCrossPageLinks() {
+  document.querySelectorAll('a[href^="sky-explorer.html"]').forEach((link) => {
+    link.setAttribute("href", skyExplorerUrl());
+  });
 }
 
 function formatClock(isoString) {
@@ -1574,6 +1655,7 @@ document.querySelectorAll(".topnav a[href^='#']").forEach((link) => {
 applyUrlState();
 els.locationQuery.value = state.activeLocation.name;
 els.bortleSelect.value = String(state.bortle);
+syncCrossPageLinks();
 setOverviewDetailsExpanded(false);
 els.modeButtons.forEach((button) => {
   button.classList.toggle("is-active", button.dataset.mode === state.mode);
