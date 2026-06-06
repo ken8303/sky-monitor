@@ -407,6 +407,60 @@ a {
   font-size: 1rem;
 }
 
+.verdict-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(122, 240, 212, 0.16);
+  background: linear-gradient(180deg, rgba(122, 240, 212, 0.1), rgba(255, 255, 255, 0.03));
+}
+
+.verdict-chip {
+  align-self: start;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.9rem;
+  color: #042033;
+  background: linear-gradient(135deg, var(--accent), #abf7ff);
+}
+
+.verdict-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.verdict-copy strong {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.12rem;
+}
+
+.verdict-copy p {
+  margin: 0;
+}
+
+.verdict-card.is-watch {
+  border-color: rgba(255, 209, 142, 0.18);
+  background: linear-gradient(180deg, rgba(255, 209, 142, 0.1), rgba(255, 255, 255, 0.03));
+}
+
+.verdict-card.is-watch .verdict-chip {
+  background: linear-gradient(135deg, #ffd18e, #ffe8bf);
+}
+
+.verdict-card.is-skip {
+  border-color: rgba(255, 154, 154, 0.16);
+  background: linear-gradient(180deg, rgba(255, 154, 154, 0.1), rgba(255, 255, 255, 0.03));
+}
+
+.verdict-card.is-skip .verdict-chip {
+  color: #2d1111;
+  background: linear-gradient(135deg, #ffb0b0, #ffd2d2);
+}
+
 .hero-actions {
   display: flex;
   gap: 12px;

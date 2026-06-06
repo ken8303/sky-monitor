@@ -189,6 +189,10 @@ const els = {
   heroEyebrow: document.querySelector("#hero-eyebrow"),
   heroTitle: document.querySelector("#hero-title"),
   heroText: document.querySelector("#hero-text"),
+  verdictCard: document.querySelector("#verdict-card"),
+  verdictChip: document.querySelector("#verdict-chip"),
+  verdictTitle: document.querySelector("#verdict-title"),
+  verdictBody: document.querySelector("#verdict-body"),
   heroStats: document.querySelector("#hero-stats"),
   mobilePriority: document.querySelector("#mobile-priority"),
   overviewDetailToggle: document.querySelector("#overview-detail-toggle"),
@@ -435,6 +439,48 @@ function qualityBadge(score) {
     return "Watch";
   }
   return "Limited";
+}
+
+function tonightVerdict(summary) {
+  const reasons = [];
+  const hasStrongDarkWindow = summary.darkHoursValue >= 2.5;
+  const lowMoonImpact = summary.moon.illumination <= 35 || summary.darkHoursValue >= 3;
+
+  if (summary.bestScore >= 78 && hasStrongDarkWindow) {
+    reasons.push(`Strong window near ${summary.bestPeak}`);
+    reasons.push(`${summary.darkHoursLabel} of dark sky`);
+    if (lowMoonImpact) {
+      reasons.push("moon impact stays manageable");
+    }
+    return {
+      level: "go",
+      chip: "Go",
+      title: "Worth setting up tonight",
+      body: `${reasons.join(" · ")}.`
+    };
+  }
+
+  if (summary.bestScore >= 58) {
+    reasons.push(`usable peak near ${summary.bestPeak}`);
+    reasons.push(summary.darkHoursValue > 0 ? `${summary.darkHoursLabel} of dark sky` : "limited darkness");
+    reasons.push(summary.moon.illumination > 55 ? "moonlight will narrow target choice" : "stay selective with targets");
+    return {
+      level: "watch",
+      chip: "Maybe",
+      title: "Good if you stay selective",
+      body: `${reasons.join(" · ")}.`
+    };
+  }
+
+  reasons.push("peak conditions stay modest");
+  reasons.push(summary.darkHoursValue > 0 ? `${summary.darkHoursLabel} of dark sky` : "no real dark window");
+  reasons.push("better for a short check than a full setup");
+  return {
+    level: "skip",
+    chip: "Skip",
+    title: "Low-value night for a full setup",
+    body: `${reasons.join(" · ")}.`
+  };
 }
 
 function describeMoonImpact(illumination, darkHours) {
@@ -789,6 +835,13 @@ function deriveSummary(location, forecast) {
     targetLabels: nextEight.map((item) => formatClock(item.time)),
     moonwatch,
     moon: todayMoon,
+    verdict: tonightVerdict({
+      bestPeak,
+      bestScore,
+      darkHoursLabel,
+      darkHoursValue: astroNightHours,
+      moon: todayMoon
+    }),
     bestStart,
     bestPeak,
     bestScore,
@@ -845,6 +898,15 @@ function renderSummary(location, forecast) {
   els.heroEyebrow.textContent = `Live at ${location.name}`;
   els.heroTitle.textContent = summary.heroTitle;
   els.heroText.textContent = summary.heroText;
+  els.verdictCard.classList.remove("is-watch", "is-skip");
+  if (summary.verdict.level === "watch") {
+    els.verdictCard.classList.add("is-watch");
+  } else if (summary.verdict.level === "skip") {
+    els.verdictCard.classList.add("is-skip");
+  }
+  els.verdictChip.textContent = summary.verdict.chip;
+  els.verdictTitle.textContent = summary.verdict.title;
+  els.verdictBody.textContent = summary.verdict.body;
   els.heroStats.innerHTML = summary.stats.map(makeStat).join("");
   renderStatusStrip(summary.statusItems);
   els.qualityBadge.textContent = summary.badge;
