@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260606b" />
+    <link rel="stylesheet" href="styles.css?v=20260606c" />
   </head>
   <body>
     <div class="page-shell">
@@ -37,6 +37,18 @@
             <button type="button" class="secondary location-device-button" id="device-location-button">
               Use my device location
             </button>
+            <label for="bortle-select" class="search-label">Sky darkness</label>
+            <select id="bortle-select" class="bortle-select">
+              <option value="1">Bortle 1 · Pristine dark sky</option>
+              <option value="2">Bortle 2 · Excellent dark site</option>
+              <option value="3">Bortle 3 · Rural sky</option>
+              <option value="4">Bortle 4 · Rural transition</option>
+              <option value="5">Bortle 5 · Suburban transition</option>
+              <option value="6">Bortle 6 · Bright suburban</option>
+              <option value="7">Bortle 7 · Suburban / urban</option>
+              <option value="8">Bortle 8 · City sky</option>
+              <option value="9">Bortle 9 · Inner-city sky</option>
+            </select>
             <p class="search-status" id="search-status">Live forecast data powered by Open-Meteo.</p>
           </form>
         </div>
@@ -427,6 +439,6 @@
       </main>
     </div>
 
-    <script src="script.js?v=20260606b"></script>
+    <script src="script.js?v=20260606c"></script>
   </body>
 </html>

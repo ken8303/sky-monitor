@@ -1,7 +1,7 @@
 const presetLocations = {
-  dartmoor: { name: "Dartmoor, UK", latitude: 50.57, longitude: -3.92, timezone: "Europe/London" },
-  sedona: { name: "Sedona, Arizona", latitude: 34.8697, longitude: -111.761, timezone: "America/Phoenix" },
-  lofoten: { name: "Lofoten, Norway", latitude: 68.154, longitude: 13.611, timezone: "Europe/Oslo" }
+  dartmoor: { name: "Dartmoor, UK", latitude: 50.57, longitude: -3.92, timezone: "Europe/London", bortle: 4 },
+  sedona: { name: "Sedona, Arizona", latitude: 34.8697, longitude: -111.761, timezone: "America/Phoenix", bortle: 3 },
+  lofoten: { name: "Lofoten, Norway", latitude: 68.154, longitude: 13.611, timezone: "Europe/Oslo", bortle: 3 }
 };
 
 const objectCatalog = [
@@ -53,6 +53,15 @@ const moonSensitivityByType = {
   "Planetary nebula": 11,
   "Globular cluster": 9,
   "Open cluster": 7
+};
+
+const bortleSensitivityByType = {
+  Star: 1,
+  Galaxy: 15,
+  Nebula: 14,
+  "Planetary nebula": 8,
+  "Globular cluster": 6,
+  "Open cluster": 4
 };
 
 const objectPhotos = {
@@ -127,6 +136,7 @@ const constellationLines = [
 
 const state = {
   activeLocation: presetLocations.dartmoor,
+  bortle: presetLocations.dartmoor.bortle,
   selectedDate: "",
   hoursOffset: 0,
   selectedName: "",
@@ -142,6 +152,7 @@ const els = {
   deviceLocationButton: document.querySelector("#device-location-button"),
   locationStatus: document.querySelector("#location-status"),
   observationDate: document.querySelector("#observation-date"),
+  bortleSelect: document.querySelector("#bortle-select"),
   objectSelect: document.querySelector("#object-select"),
   slider: document.querySelector("#time-slider"),
   resetTime: document.querySelector("#reset-time"),
@@ -356,6 +367,28 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+function bortleLabel(value) {
+  return `Bortle ${value}`;
+}
+
+function bortleDescription(value) {
+  if (value <= 2) {
+    return "pristine dark sky";
+  }
+  if (value <= 4) {
+    return "dark rural sky";
+  }
+  if (value <= 6) {
+    return "suburban-bright sky";
+  }
+  return "city-bright sky";
+}
+
+function bortlePenaltyForObject(object, bortle) {
+  const sensitivity = bortleSensitivityByType[object.type] ?? 5;
+  return Math.max(0, bortle - 1) * sensitivity * 0.8;
+}
+
 function timeZoneParts(date, timezone) {
   const formatter = new Intl.DateTimeFormat("en-GB", {
     timeZone: timezone,
@@ -454,6 +487,7 @@ function stateToUrl() {
   if (location.timezone) {
     params.set("tz", location.timezone);
   }
+  params.set("bortle", String(state.bortle));
   params.set("date", activePlanningDate(location));
   params.set("obj", state.selectedName || bestTargetForTonight(location).name);
   if (state.hoursOffset !== 0) {
@@ -482,6 +516,7 @@ function applyUrlState() {
   const lon = Number(params.get("lon"));
   const loc = params.get("loc");
   const timezone = params.get("tz");
+  const bortle = Number(params.get("bortle"));
   const date = params.get("date");
   const obj = params.get("obj");
   const hours = Number(params.get("hours"));
@@ -501,6 +536,10 @@ function applyUrlState() {
 
   if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
     state.selectedDate = date;
+  }
+
+  if (Number.isFinite(bortle) && bortle >= 1 && bortle <= 9) {
+    state.bortle = bortle;
   }
 
   state.showLabels = params.get("labels") !== "0";
@@ -709,8 +748,9 @@ function rankObjects(location, date) {
       const base = coords.altitude * 1.1 - Math.max(object.mag || 4, 0) * 3;
       const seasonBoost = seasonalBonusForObject(object, location, date);
       const moonPenalty = moonPenaltyForObject(object, moonState);
-      const score = Math.round(clamp(base + 45 + seasonBoost - moonPenalty, 0, 100));
-      return { ...object, altitude: coords.altitude, azimuth: coords.azimuth, score, seasonBoost, moonPenalty };
+      const bortlePenalty = bortlePenaltyForObject(object, state.bortle);
+      const score = Math.round(clamp(base + 45 + seasonBoost - moonPenalty - bortlePenalty, 0, 100));
+      return { ...object, altitude: coords.altitude, azimuth: coords.azimuth, score, seasonBoost, moonPenalty, bortlePenalty };
     })
     .filter((object) => object.altitude > 0)
     .sort((a, b) => b.score - a.score);
@@ -938,6 +978,7 @@ function buildAstronomySummary(location) {
 
   return {
     cards: [
+      ["Sky darkness", bortleLabel(state.bortle), bortleDescription(state.bortle)],
       ["Moon phase", moonState.phase, `${moonState.fraction}% illuminated`],
       ["Moon impact", moonState.summary, moonTiming],
       ["Dark window", darknessWindow, twilightLine],
@@ -1015,9 +1056,9 @@ function buildTonightSuggestion(location) {
       ["Tonight suggestion", suggestion, `${bestWindow.best.name} looks strongest for the selected location.`],
       ["Best view time", formatClock(bestWindow.date, location), `${bestWindow.best.type} peaks near ${Math.round(bestWindow.best.altitude)}° altitude.`],
       ["Best target tonight", topNow.name, `${topNow.type} reaches about ${Math.round(topNow.altitude)}° in the dark-sky window.`],
-      ["Moon check", moonState.summary, astronomy.cards[2][1]]
+      ["Sky darkness", bortleLabel(state.bortle), `This ${bortleDescription(state.bortle)} will shape faint-target confidence.`]
     ],
-    note: `${location.name} is most rewarding near ${formatClock(bestWindow.date, location)} when ${bestWindow.best.name} rises into its best placement. ${moonState.phase} moon conditions should be part of your target choice.`
+    note: `${location.name} is most rewarding near ${formatClock(bestWindow.date, location)} when ${bestWindow.best.name} rises into its best placement. ${moonState.phase} moon conditions and ${bortleLabel(state.bortle).toLowerCase()} should both shape your target choice.`
   };
 }
 
@@ -1621,7 +1662,13 @@ async function applyLocation(location, statusText) {
   if (!location.timezone) {
     location.timezone = await fetchTimezoneForCoordinates(location.latitude, location.longitude).catch(() => undefined);
   }
-  state.activeLocation = location;
+  state.activeLocation = {
+    ...location,
+    bortle: Number.isFinite(location.bortle) ? location.bortle : state.bortle
+  };
+  if (Number.isFinite(location.bortle)) {
+    state.bortle = location.bortle;
+  }
   state.selectedDate = state.selectedDate || locationDateString(new Date(), location);
   populateOptions();
   const chosen = state.selectedName ? objectByName(state.selectedName).name : bestTargetForTonight(location).name;
@@ -1630,6 +1677,7 @@ async function applyLocation(location, statusText) {
   els.objectSelect.value = state.selectedName;
   els.location.value = location.name;
   els.observationDate.value = activePlanningDate(location);
+  els.bortleSelect.value = String(state.bortle);
   els.locationStatus.textContent = `${trimTrailingPunctuation(statusText || `Using ${location.name}`)}. Planning for ${planningDateLabel(location)}.`;
   drawSky();
 }
@@ -1692,6 +1740,19 @@ els.observationDate.addEventListener("input", () => {
   state.selectedName = eligibleNames.includes(preferred) ? preferred : bestTargetForTonight(currentLocation()).name;
   els.objectSelect.value = state.selectedName;
   els.locationStatus.textContent = `Using ${currentLocation().name} for ${planningDateLabel()}.`;
+  drawSky();
+});
+
+els.bortleSelect.addEventListener("change", () => {
+  state.bortle = Number(els.bortleSelect.value);
+  if (state.activeLocation) {
+    state.activeLocation = { ...state.activeLocation, bortle: state.bortle };
+  }
+  populateOptions();
+  const eligibleNames = [...els.objectSelect.options].map((option) => option.value);
+  state.selectedName = eligibleNames.includes(state.selectedName) ? state.selectedName : bestTargetForTonight(currentLocation()).name;
+  els.objectSelect.value = state.selectedName;
+  els.locationStatus.textContent = `Using ${currentLocation().name} for ${planningDateLabel()}. ${bortleLabel(state.bortle)} selected.`;
   drawSky();
 });
 
@@ -1811,6 +1872,7 @@ populateOptions();
 els.objectSelect.value = state.selectedName;
 els.location.value = state.activeLocation.name;
 els.observationDate.value = activePlanningDate(state.activeLocation);
+els.bortleSelect.value = String(state.bortle);
 els.locationStatus.textContent = `Using ${state.activeLocation.name} for ${planningDateLabel(state.activeLocation)}.`;
 els.slider.value = String(state.hoursOffset);
 els.toggles.forEach((button) => {

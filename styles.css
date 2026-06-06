@@ -139,6 +139,16 @@ a {
   outline: none;
 }
 
+.bortle-select {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 13px 16px;
+  font: inherit;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  outline: none;
+}
+
 .search-button {
   min-width: 88px;
   padding: 13px 18px;

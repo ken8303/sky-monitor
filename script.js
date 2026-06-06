@@ -1,7 +1,7 @@
 const presetLocations = {
-  dartmoor: { name: "Dartmoor, UK", latitude: 50.57, longitude: -3.92 },
-  sedona: { name: "Sedona, Arizona", latitude: 34.8697, longitude: -111.761 },
-  lofoten: { name: "Lofoten, Norway", latitude: 68.154, longitude: 13.611 }
+  dartmoor: { name: "Dartmoor, UK", latitude: 50.57, longitude: -3.92, bortle: 4 },
+  sedona: { name: "Sedona, Arizona", latitude: 34.8697, longitude: -111.761, bortle: 3 },
+  lofoten: { name: "Lofoten, Norway", latitude: 68.154, longitude: 13.611, bortle: 3 }
 };
 
 const weatherLabels = {
@@ -40,6 +40,13 @@ const targetCatalog = [
 ];
 
 const targetColors = ["#ff8e72", "#b4ff8a", "#7fd2ff"];
+const targetLightSensitivity = {
+  Galaxy: 16,
+  Nebula: 14,
+  "Planetary nebula": 9,
+  "Globular cluster": 7,
+  "Open cluster": 4
+};
 const mapOverlayConfig = {
   clouds: { label: "Clouds", overlay: "clouds", product: "ecmwf", zoom: "5" },
   wind: { label: "Wind", overlay: "wind", product: "ecmwf", zoom: "5" },
@@ -175,6 +182,7 @@ const state = {
   mode: "visual",
   mapOverlay: "clouds",
   activeLocation: presetLocations.dartmoor,
+  bortle: presetLocations.dartmoor.bortle,
   activeData: null,
   liveSummary: null
 };
@@ -184,6 +192,7 @@ const els = {
   searchForm: document.querySelector("#search-form"),
   searchStatus: document.querySelector("#search-status"),
   deviceLocationButton: document.querySelector("#device-location-button"),
+  bortleSelect: document.querySelector("#bortle-select"),
   sourceNote: document.querySelector("#source-note"),
   statusStrip: document.querySelector("#status-strip"),
   heroEyebrow: document.querySelector("#hero-eyebrow"),
@@ -246,6 +255,28 @@ function toTitle(value) {
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
+}
+
+function bortleLabel(value) {
+  return `Bortle ${value}`;
+}
+
+function bortleDescription(value) {
+  if (value <= 2) {
+    return "pristine dark sky";
+  }
+  if (value <= 4) {
+    return "dark rural sky";
+  }
+  if (value <= 6) {
+    return "suburban-bright sky";
+  }
+  return "city-bright sky";
+}
+
+function lightPollutionPenalty(bortle, type) {
+  const sensitivity = targetLightSensitivity[type] ?? 6;
+  return Math.max(0, bortle - 1) * sensitivity * 0.75;
 }
 
 function isMobileLayout() {
@@ -311,6 +342,9 @@ function stateToUrl() {
   if (state.mapOverlay !== "clouds") {
     params.set("map", state.mapOverlay);
   }
+  if (Number.isFinite(state.bortle) && state.bortle !== presetLocations.dartmoor.bortle) {
+    params.set("bortle", String(state.bortle));
+  }
 
   return params.toString();
 }
@@ -331,6 +365,7 @@ function applyUrlState() {
   const loc = params.get("loc");
   const mode = params.get("mode");
   const map = params.get("map");
+  const bortle = Number(params.get("bortle"));
 
   if (loc && Number.isFinite(lat) && Number.isFinite(lon)) {
     state.activeLocation = {
@@ -346,6 +381,10 @@ function applyUrlState() {
 
   if (map && mapOverlayConfig[map]) {
     state.mapOverlay = map;
+  }
+
+  if (Number.isFinite(bortle) && bortle >= 1 && bortle <= 9) {
+    state.bortle = bortle;
   }
 }
 
@@ -445,13 +484,15 @@ function tonightVerdict(summary) {
   const reasons = [];
   const hasStrongDarkWindow = summary.darkHoursValue >= 2.5;
   const lowMoonImpact = summary.moon.illumination <= 35 || summary.darkHoursValue >= 3;
+  const darkSite = summary.bortle <= 4;
 
-  if (summary.bestScore >= 78 && hasStrongDarkWindow) {
+  if (summary.bestScore >= 78 && hasStrongDarkWindow && darkSite) {
     reasons.push(`Strong window near ${summary.bestPeak}`);
     reasons.push(`${summary.darkHoursLabel} of dark sky`);
     if (lowMoonImpact) {
       reasons.push("moon impact stays manageable");
     }
+    reasons.push(bortleDescription(summary.bortle));
     return {
       level: "go",
       chip: "Go",
@@ -463,7 +504,7 @@ function tonightVerdict(summary) {
   if (summary.bestScore >= 58) {
     reasons.push(`usable peak near ${summary.bestPeak}`);
     reasons.push(summary.darkHoursValue > 0 ? `${summary.darkHoursLabel} of dark sky` : "limited darkness");
-    reasons.push(summary.moon.illumination > 55 ? "moonlight will narrow target choice" : "stay selective with targets");
+    reasons.push(summary.bortle >= 6 ? `${bortleLabel(summary.bortle)} will narrow faint targets` : summary.moon.illumination > 55 ? "moonlight will narrow target choice" : "stay selective with targets");
     return {
       level: "watch",
       chip: "Maybe",
@@ -474,6 +515,7 @@ function tonightVerdict(summary) {
 
   reasons.push("peak conditions stay modest");
   reasons.push(summary.darkHoursValue > 0 ? `${summary.darkHoursLabel} of dark sky` : "no real dark window");
+  reasons.push(`${bortleLabel(summary.bortle)} sky brightness`);
   reasons.push("better for a short check than a full setup");
   return {
     level: "skip",
@@ -665,6 +707,8 @@ function deriveSummary(location, forecast) {
   const astroNightHours = hasAstronomicalNight ? Math.max(0, (astroTimes.nightEnd - astroTimes.night) / 3600000) : 0;
   const moonPenalty = Math.round(todayMoon.illumination * 0.18);
   const darknessScore = Math.round(clamp(bestScore - moonPenalty + astroNightHours * 3.5 + (!hasAstronomicalNight ? 8 : 0), 8, 96));
+  const bortlePenalty = Math.round((state.bortle - 1) * 5.5);
+  const skyQualityScore = Math.round(clamp(darknessScore - bortlePenalty, 6, 96));
   const darknessTitle = hasAstronomicalNight
     ? `Astronomical darkness from ${darkStart} to ${darkEnd}`
     : "No full astronomical night tonight";
@@ -732,7 +776,10 @@ function deriveSummary(location, forecast) {
       : ["Moisture", "Moderate risk", `The dew gap is ${dewGap.toFixed(1)}°C, which buys some time before condensation pressure rises.`],
     bestScore < 58
       ? ["Cloud timing", "Watch closely", "The best upcoming score stays fairly modest, so treat the night as opportunistic rather than fixed."]
-      : ["Cloud timing", "Promising", `There is a stronger lane near ${bestPeak}, so shape the session around that window.`]
+      : ["Cloud timing", "Promising", `There is a stronger lane near ${bestPeak}, so shape the session around that window.`],
+    state.bortle >= 6
+      ? ["Light pollution", "High impact", `${bortleLabel(state.bortle)} means faint galaxies and broad nebulae will underperform unless they climb very high.`]
+      : ["Light pollution", "Manageable", `${bortleLabel(state.bortle)} still supports darker-sky work if transparency and altitude cooperate.`]
   ];
   const alertsNote = bestScore >= 70
     ? "The night has a real high-value stretch, but the watchouts still matter if you are setting up heavier gear."
@@ -740,7 +787,7 @@ function deriveSummary(location, forecast) {
   const mapSpotlight = [
     ["Current sky", currentLabel, `${current.cloud_cover}% cloud cover now`],
     ["Peak hour", bestPeak, `${qualityBadge(bestScore)} viewing window`],
-    ["Surface flow", `${Math.round(current.wind_speed_10m)} km/h`, `${visibilityNow} km visibility`]
+    ["Sky darkness", bortleLabel(state.bortle), bortleDescription(state.bortle)]
   ];
   const targetTracks = buildTargetTracks(location, nextEight.map((item) => item.time), forecast.utc_offset_seconds || 0);
   const targetSpotlightSource = targetTracks.map((target) => {
@@ -752,7 +799,8 @@ function deriveSummary(location, forecast) {
         bestScore * 0.55 +
         peakAltitude * 0.45 +
         target.visibleHours * 4 -
-        todayMoon.illumination * 0.08,
+        todayMoon.illumination * 0.08 -
+        lightPollutionPenalty(state.bortle, target.type),
         18,
         96
       )
@@ -774,6 +822,7 @@ function deriveSummary(location, forecast) {
     subtitle: describeMoonImpact(todayMoon.illumination, astroNightHours),
     items: [
       ["Darkness score", `${darknessScore}/100`, hasAstronomicalNight ? `${darkHoursLabel} of astronomical night` : "No fully dark astronomical window"],
+      ["Sky quality", `${skyQualityScore}/100`, `${bortleLabel(state.bortle)} · ${bortleDescription(state.bortle)}`],
       ["Best use", moonWindow, `Peak weather score near ${bestPeak}`],
       ["Twilight span", `${nauticalDusk} - ${nauticalDawn}`, hasAstronomicalNight ? "Nautical dusk to dawn" : "Late twilight all night"]
     ],
@@ -787,7 +836,8 @@ function deriveSummary(location, forecast) {
     heroText: overview,
     stats: [
       { label: "Viewing Score", value: `${bestScore}/100`, note: `${bestStart} to ${bestPeak}` },
-      { label: "Dark Sky", value: darkHoursLabel, note: hasAstronomicalNight ? `Moon ${todayMoon.illumination}%` : "Late twilight" }
+      { label: "Dark Sky", value: darkHoursLabel, note: hasAstronomicalNight ? `Moon ${todayMoon.illumination}%` : "Late twilight" },
+      { label: "Bortle", value: `${state.bortle}`, note: bortleDescription(state.bortle) }
     ],
     badge: qualityBadge(bestScore),
     note: `${currentLabel} right now, with the strongest near-term score at ${bestPeak}. Wind is ${Math.round(current.wind_speed_10m)} km/h and humidity is ${current.relative_humidity_2m}%.`,
@@ -818,6 +868,7 @@ function deriveSummary(location, forecast) {
     quicklook: [
       ["Timezone", forecast.timezone, "Location-local forecast"],
       ["Wind", `${Math.round(current.wind_speed_10m)} km/h`, "Live current wind"],
+      ["Bortle", bortleLabel(state.bortle), bortleDescription(state.bortle)],
       ["Dark Hours", darkHoursLabel, `Score ${darknessScore}/100`]
     ],
     chart: scored.map((item) => item.score),
@@ -840,7 +891,8 @@ function deriveSummary(location, forecast) {
       bestScore,
       darkHoursLabel,
       darkHoursValue: astroNightHours,
-      moon: todayMoon
+      moon: todayMoon,
+      bortle: state.bortle
     }),
     bestStart,
     bestPeak,
@@ -1355,8 +1407,15 @@ async function loadLocation(location, statusMessage) {
 
   try {
     const forecast = await fetchForecast(location);
-    state.activeLocation = location;
+    state.activeLocation = {
+      ...location,
+      bortle: Number.isFinite(location.bortle) ? location.bortle : state.bortle
+    };
+    if (Number.isFinite(location.bortle)) {
+      state.bortle = location.bortle;
+    }
     els.locationQuery.value = location.name;
+    els.bortleSelect.value = String(state.bortle);
     renderSummary(location, forecast);
     els.searchStatus.textContent = `Loaded live forecast for ${location.name}.`;
   } catch (error) {
@@ -1435,6 +1494,18 @@ els.modeButtons.forEach((button) => {
   });
 });
 
+els.bortleSelect.addEventListener("change", () => {
+  state.bortle = Number(els.bortleSelect.value);
+  if (state.activeLocation) {
+    state.activeLocation = { ...state.activeLocation, bortle: state.bortle };
+  }
+  if (state.activeData && state.activeLocation) {
+    renderSummary(state.activeLocation, state.activeData);
+  } else {
+    updateUrlState();
+  }
+});
+
 els.mapOverlayButtons.forEach((button) => {
   button.addEventListener("click", () => {
     state.mapOverlay = button.dataset.mapOverlay;
@@ -1502,6 +1573,7 @@ document.querySelectorAll(".topnav a[href^='#']").forEach((link) => {
 
 applyUrlState();
 els.locationQuery.value = state.activeLocation.name;
+els.bortleSelect.value = String(state.bortle);
 setOverviewDetailsExpanded(false);
 els.modeButtons.forEach((button) => {
   button.classList.toggle("is-active", button.dataset.mode === state.mode);
